@@ -52,6 +52,8 @@ async function main(): Promise<void> {
   const audio = game.add(new AudioEngine(playCamera), 'always');
   const fx = game.add(new ScareFX(game.renderer), 'always');
   const settings = loadSettings();
+  // Pruebas automatizadas en silencio: ?mute fuerza volumen 0 sin tocar las opciones guardadas.
+  const MUTE = new URLSearchParams(location.search).has("mute");
   let session: Session | null = null;
   let closeMenu: (() => void) | null = null;
   let closePause: (() => void) | null = null;
@@ -61,7 +63,7 @@ async function main(): Promise<void> {
     setSensitivityScale(s.sensitivity);
     playCamera.fov = s.fov;
     playCamera.updateProjectionMatrix();
-    audio.setVolume(s.volume);
+    audio.setVolume(MUTE ? 0 : s.volume);
     game.renderer.post.uniforms.uBrightness.value = s.brightness;
     fx.reduceFlashes = s.reduceFlashes;
     if ((game.renderer.internalHeight > 400) !== s.highQuality) game.renderer.setQuality(s.highQuality);

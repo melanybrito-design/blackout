@@ -17,6 +17,7 @@ clic izq. foto / cambiar pantalla, rueda galería) · 2 grabadora (clic izq.) ·
 - `?debug=1` → FPS, draw calls, tensión del Director, flags. Teclas P (post-fx), G (glitch), L (idioma).
 - `?debug=1&cp=corridor|classroom|bathroom|chase|gym` → saltar a un checkpoint.
 - `?debug=1&nopause` → no pausar al perder el mouse (pruebas automatizadas).
+- `?mute` → volumen 0 sin cambiar las opciones guardadas.
 
 ## Scripts
 `npm run build` (typecheck + build) · `npm test` (Vitest) · `npm run preview`.
