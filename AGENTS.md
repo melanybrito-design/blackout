@@ -58,7 +58,8 @@ La pregunta central que el jugador debe sentir todo el tiempo:
 ### Política de assets (OBLIGATORIA)
 - **Preferencia 1: generado por código.** Geometría con primitivas de three, texturas con `CanvasTexture` (baldosas, casilleros, grafitis, papel, sangre, afiches, rostros degradados), audio sintetizado con Web Audio.
 - **Preferencia 2: librerías gratuitas CC0.** Solo: Kenney.nl, Quaternius, Poly Haven, ambientCG, Freesound **solo con licencia CC0**. Registrar cada asset externo en `ASSETS_CREDITS.md` (nombre, URL, licencia).
-- **Prohibido:** assets con licencia no libre, ripeados de otros juegos, generados por IA de terceros, o rostros de personas reales.
+- **Preferencia 3 (decisión del usuario, 28/09/2026):** imágenes y videos que el usuario genera en **Higgsfield** para este proyecto, según `docs/PROMPTS_HIGGSFIELD.md`. Van en `public/assets/` con los nombres exactos del documento. Todo asset debe tener un **fallback procedural** si falta el archivo.
+- **Prohibido:** assets con licencia no libre, ripeados de otros juegos, o rostros de personas reales.
 - Presupuesto total del build: **< 40 MB**.
 
 ## 5. Arquitectura y estructura de carpetas
