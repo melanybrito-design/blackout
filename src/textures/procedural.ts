@@ -46,7 +46,7 @@ function noise(ctx: CanvasRenderingContext2D, r: () => number, w: number, h: num
 
 /** Baldosa institucional ajedrezada beige / verde gastado. */
 export function floorTiles(): THREE.CanvasTexture {
-  return make(128, 128, 11, (ctx, r, w, h) => {
+  return make(256, 256, 11, (ctx, r, w, h) => {
     const s = w / 4;
     for (let y = 0; y < 4; y++)
       for (let x = 0; x < 4; x++) {
@@ -86,7 +86,7 @@ export function floorTiles(): THREE.CanvasTexture {
 
 /** Pared de colegio: zócalo verde abajo, crema arriba, franja divisoria, manchas de humedad. */
 export function schoolWall(): THREE.CanvasTexture {
-  return make(128, 128, 23, (ctx, r, w, h) => {
+  return make(256, 256, 23, (ctx, r, w, h) => {
     ctx.fillStyle = '#b9b39a';
     ctx.fillRect(0, 0, w, h);
     ctx.fillStyle = '#3f5a4c';

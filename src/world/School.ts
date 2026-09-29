@@ -31,6 +31,7 @@ import {
   mirrorWriting,
   nightWindow,
   perimeterWall,
+  wallClock,
   wetConcrete,
 } from '../textures/world';
 import { posterCanvas } from '../textures/poster';
@@ -39,7 +40,7 @@ import { CollisionWorld } from './Collision';
 import { Door } from './Door';
 import { FluorescentLight, type FlickerMode } from './FluorescentLight';
 import { LevelBuilder, type MatDef } from './LevelBuilder';
-import { chairGeometry, deskGeometry, instanced, Lightning, ps2Basic, Rain, seatedFigure, type Placement } from './props';
+import { chairGeometry, deskGeometry, instanced, Lightning, mergeByMaterial, ps2Basic, Rain, seatedFigure, type Placement } from './props';
 import type { Surface } from '../player/PlayerController';
 
 export type Area = 'patio' | 'hall' | 'corridor' | 'classroom' | 'bathroom' | 'long' | 'gym';
@@ -217,7 +218,7 @@ export function buildSchool(game: Game): School {
   entryLamp.position.set(0, 3, 2.3);
   scene.add(entryLamp);
 
-  const rain = game.add(new Rain(-8, 8, 2, 20));
+  const rain = game.add(new Rain(-8, 8, 2, 20, 1100));
   scene.add(rain.mesh);
   const skyFlash = new THREE.HemisphereLight(0xb0c8ff, 0x101014, 0);
   scene.add(skyFlash);
@@ -391,6 +392,35 @@ export function buildSchool(game: Game): School {
     [-34, 'off', false],
   ] as Array<[number, FlickerMode, boolean]>).forEach(([z, m, l]) => light('corridor', 0, 2.95, z, m, l));
 
+  // Utilería del pasillo: zócalos, tuberías, reloj detenido a las 21:00, extintor, basurero, bebedero
+  B.box(1.38, 1.4, 0, 0.12, -34, -4, M.frame, { collide: false });
+  B.box(-1.4, -1.38, 0, 0.12, -37, -12.3, M.frame, { collide: false });
+  B.box(0.95, 1.1, 2.72, 2.84, -37, -4, M.metal, { collide: false });
+  B.box(0.75, 0.85, 2.78, 2.88, -37, -4, M.metal, { collide: false });
+  for (let z = -6; z > -37; z -= 3) B.box(0.7, 1.4, 2.7, 2.9, z - 0.04, z + 0.04, M.metal, { collide: false });
+  const clockMat = ps2Lambert({ map: wallClock(), transparent: true });
+  for (const [x, y, z, ry] of [
+    [1.38, 2.35, -6.5, -Math.PI / 2],
+    [9.38, 2.6, -10, -Math.PI / 2],
+  ] as Array<[number, number, number, number]>) {
+    const clock = new THREE.Mesh(new THREE.CircleGeometry(0.2, 16), clockMat);
+    clock.position.set(x, y, z);
+    clock.rotation.y = ry;
+    scene.add(clock);
+  }
+  const ext = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8), ps2Lambert({ color: 0x8e1414 }));
+  ext.position.set(1.36, 1.05, -19.5);
+  scene.add(ext);
+  const bin = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.2, 0.17, 0.55, 10, 1, true),
+    ps2Lambert({ color: 0x2c3a33, side: THREE.DoubleSide }),
+  );
+  bin.position.set(1.15, 0.275, -27);
+  scene.add(bin);
+  collision.add(0.95, 1.4, -27.25, -26.75, 0, 0.6);
+  B.box(-1.5, -1.15, 0.8, 1.0, -16.4, -15.6, M.porcelain);
+  B.box(-1.45, -1.3, 0, 0.8, -16.1, -15.9, M.porcelain, { collide: false });
+
   // ================= SALA 2°B =================
   B.floor(1.5, 9.5, -15, -5, M.wood);
   B.ceiling(1.5, 9.5, -15, -5, M.ceil);
@@ -441,13 +471,9 @@ export function buildSchool(game: Game): School {
   instanced(scene, deskGeometry(), chairMat, desks);
   collision.add(1.8, 9.2, -5.9, -5, 0, 0.8);
   // Guiones tirados
-  const paperMat = ps2Lambert({ color: 0xe6e1d2 });
-  for (let i = 0; i < 7; i++) {
-    const p = new THREE.Mesh(new THREE.PlaneGeometry(0.21, 0.29), paperMat);
-    p.rotation.set(-Math.PI / 2, 0, Math.random() * 6);
-    p.position.set(4 + Math.random() * 3, 0.006 + i * 0.001, -12.5 + Math.random() * 3.5);
-    scene.add(p);
-  }
+  const papers: Placement[] = [];
+  for (let i = 0; i < 7; i++) papers.push({ x: 4 + Math.random() * 3, y: 0.006 + i * 0.001, z: -12.5 + Math.random() * 3.5, rx: -Math.PI / 2, rz: Math.random() * 6 });
+  instanced(scene, new THREE.PlaneGeometry(0.21, 0.29), ps2Lambert({ color: 0xe6e1d2 }), papers);
   light('classroom', 4, 2.95, -10, 'steady', true, Math.PI / 2);
   light('classroom', 7.5, 2.95, -10, 'unstable', true, Math.PI / 2);
 
@@ -473,12 +499,10 @@ export function buildSchool(game: Game): School {
   sinkBlood.rotation.x = -Math.PI / 2;
   sinkBlood.position.set(-8.12, 0.925, -23);
   scene.add(sinkBlood);
-  const nailMat = ps2Lambert({ color: 0xd8c8b8 });
   for (let i = 0; i < 5; i++) {
-    const n = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.003, 0.009), nailMat);
-    n.position.set(-8.12 + (Math.random() - 0.5) * 0.05, 0.93, -23 + (Math.random() - 0.5) * 0.05);
-    n.rotation.y = Math.random() * 3;
-    scene.add(n);
+    const x = -8.12 + (Math.random() - 0.5) * 0.05;
+    const z = -23 + (Math.random() - 0.5) * 0.05;
+    B.box(x - 0.006, x + 0.006, 0.928, 0.931, z - 0.005, z + 0.005, M.porcelain, { collide: false });
   }
   // Espejo (reflejo real): ve al mundo + cuerpo del jugador + lo que solo existe en espejos
   const mirror = new Reflector(new THREE.PlaneGeometry(6.2, 1.15), {
@@ -555,6 +579,15 @@ export function buildSchool(game: Game): School {
     w.rotation.y = Math.PI;
     scene.add(w);
   }
+  const puddle = new THREE.Mesh(
+    new THREE.CircleGeometry(1, 20),
+    applyPS2(new THREE.MeshPhongMaterial({ color: 0x05080a, specular: 0x8aa4b0, shininess: 90, transparent: true, opacity: 0.85 })),
+  );
+  puddle.rotation.x = -Math.PI / 2;
+  puddle.scale.set(3.1, 1.3, 1);
+  puddle.position.set(28.5, 0.012, -35.5);
+  scene.add(puddle);
+
   // Mesas volcadas como obstáculos
   B.box(8.6, 9.4, 0, 0.8, -37, -35.5, M.frame);
   B.box(14.6, 15.4, 0, 0.8, -35.4, -34, M.frame);
@@ -610,7 +643,7 @@ export function buildSchool(game: Game): School {
   B.box(57.9, 58, 0, 4.2, -35.6, -35.4, M.metal, { collide: false });
 
   const gymGroup = new THREE.Group();
-  scene.add(gymGroup);
+  const figures = new THREE.Group();
   const gc = new THREE.Vector3(51, 0, -35.5);
   const gymChairs: Placement[] = [];
   const uniformMat = ps2Lambert({ color: 0xd9d6cc });
@@ -628,7 +661,7 @@ export function buildSchool(game: Game): School {
       const f = seatedFigure(uniformMat, skinMat, skirtMat, bagMat);
       f.position.set(x, 0, z);
       f.rotation.y = ry;
-      gymGroup.add(f);
+      figures.add(f);
     }
     if (i === 6) {
       const card = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.19), ps2Lambert({ map: chairCard() }));
@@ -639,6 +672,8 @@ export function buildSchool(game: Game): School {
     }
   }
   instanced(scene, chairGeometry(), chairMat, gymChairs);
+  gymGroup.add(mergeByMaterial(figures));
+  scene.add(gymGroup);
   const gymDrag = new THREE.Mesh(
     new THREE.PlaneGeometry(0.6, 6),
     ps2Lambert({ map: dragMarks(), transparent: true, depthWrite: false }),

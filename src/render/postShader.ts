@@ -64,7 +64,9 @@ void main() {
   col.g = texture2D(tScene, uv).g;
   col.b = texture2D(tScene, uv - dir * ab * 2.0).b;
 
-  col = toSRGB(col * uBrightness);
+  col *= uBrightness * 1.15;
+  col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14); // ACES aprox.
+  col = toSRGB(col);
 
   // Viñeta
   float v = smoothstep(0.85, 0.2, length(dir * vec2(1.0, 0.8)) * (1.0 + uVignette));

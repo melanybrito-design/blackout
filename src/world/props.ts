@@ -170,3 +170,29 @@ const WHITE = new THREE.Color(0xdfeaff);
 export function ps2Basic(params: THREE.MeshBasicMaterialParameters): THREE.MeshBasicMaterial {
   return applyPS2(new THREE.MeshBasicMaterial(params));
 }
+
+/** Fusiona todas las mallas estáticas de un grupo por material (menos draw calls). */
+export function mergeByMaterial(group: THREE.Object3D): THREE.Group {
+  group.updateMatrixWorld(true);
+  const buckets = new Map<THREE.Material, THREE.BufferGeometry[]>();
+  group.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (!m.isMesh || Array.isArray(m.material)) return;
+    let g = m.geometry.clone().applyMatrix4(m.matrixWorld);
+    if (g.index) g = g.toNonIndexed();
+    for (const key of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(key)) g.deleteAttribute(key);
+    if (!g.attributes.uv) g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
+    const list = buckets.get(m.material) ?? [];
+    list.push(g);
+    buckets.set(m.material, list);
+  });
+  const out = new THREE.Group();
+  for (const [mat, geos] of buckets) {
+    const merged = mergeGeometries(geos, false);
+    if (!merged) continue;
+    const mesh = new THREE.Mesh(merged, mat);
+    mesh.castShadow = mesh.receiveShadow = true;
+    out.add(mesh);
+  }
+  return out;
+}

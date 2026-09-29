@@ -422,3 +422,46 @@ export function burlap(): THREE.CanvasTexture {
   noise(ctx, r, 32, 32, 20);
   return toTexture(c);
 }
+
+/** Reloj de pared detenido a las 21:00. */
+export function wallClock(): THREE.CanvasTexture {
+  const [c, ctx] = canvas(64, 64);
+  ctx.fillStyle = '#e8e3d3';
+  ctx.beginPath();
+  ctx.arc(32, 32, 30, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#1b1b1b';
+  ctx.stroke();
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    ctx.fillStyle = '#1b1b1b';
+    ctx.fillRect(32 + Math.sin(a) * 24 - 1, 32 - Math.cos(a) * 24 - 1, 2, 3);
+  }
+  // 21:00 → aguja corta en 9, larga en 12
+  ctx.lineCap = 'round';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(32, 32);
+  ctx.lineTo(18, 32);
+  ctx.stroke();
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(32, 32);
+  ctx.lineTo(32, 11);
+  ctx.stroke();
+  ctx.strokeStyle = '#a3121b';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(32, 32);
+  ctx.lineTo(44, 50);
+  ctx.stroke();
+  // vidrio rajado
+  ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+  ctx.beginPath();
+  ctx.moveTo(10, 20);
+  ctx.lineTo(28, 30);
+  ctx.lineTo(24, 48);
+  ctx.stroke();
+  return toTexture(c, false);
+}

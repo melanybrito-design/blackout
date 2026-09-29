@@ -2,15 +2,15 @@
 
 export const RENDER = {
   /** Alto interno en píxeles (el ancho se deriva del aspecto de la ventana). */
-  internalHeight: 270,
-  internalHeightHigh: 360,
+  internalHeight: 360,
+  internalHeightHigh: 540,
   /** Grilla de snapping de vértices en NDC (más bajo = más temblor). */
-  vertexSnap: 150,
+  vertexSnap: 230,
   /** Niveles de color por canal antes del dithering. */
-  colorLevels: 28,
-  grain: 0.07,
+  colorLevels: 40,
+  grain: 0.055,
   vignette: 0.55,
-  aberration: 0.6,
+  aberration: 0.5,
   fogColor: 0x10171a,
   fogDensity: 0.085,
   fov: 72,

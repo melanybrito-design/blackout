@@ -64,7 +64,7 @@ async function main(): Promise<void> {
     audio.setVolume(s.volume);
     game.renderer.post.uniforms.uBrightness.value = s.brightness;
     fx.reduceFlashes = s.reduceFlashes;
-    if ((game.renderer.internalHeight > 300) !== s.highQuality) game.renderer.setQuality(s.highQuality);
+    if ((game.renderer.internalHeight > 400) !== s.highQuality) game.renderer.setQuality(s.highQuality);
     if (session) session.hud.subtitles = s.subtitles;
   };
   applySettings(settings);

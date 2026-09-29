@@ -9,16 +9,16 @@
 |---|---|
 | 0. Setup | ✅ |
 | 1. Motor y look PS2 | ✅ (120 FPS, 55 draw calls) |
-| 2. Jugador y nivel gris | ⬜ |
-| 3. Audio procedural | ⬜ |
-| 4. Celular | ⬜ |
-| 5. Diario + pistas + i18n | ⬜ |
-| 6. Grabadora + EVP | ⬜ |
-| 7. Director de Miedo + eventos menores | ⬜ |
-| 8. Entidades + screamers S1–S5 | ⬜ |
-| 9. Nivel final (arte procedural + gore) | ⬜ |
-| 10. Menú afiche + meta-horror | ⬜ |
-| 11. Pulido, ritmo y playtest | ⬜ |
+| 2. Jugador y nivel gris | ✅ |
+| 3. Audio procedural | ✅ |
+| 4. Celular | ✅ |
+| 5. Diario + pistas + i18n | ✅ |
+| 6. Grabadora + EVP | ✅ |
+| 7. Director de Miedo + eventos menores | ✅ |
+| 8. Entidades + screamers S1–S5 | ✅ |
+| 9. Nivel final (arte procedural + gore) | ✅ (pendiente: assets Higgsfield) |
+| 10. Menú afiche + meta-horror | ✅ |
+| 11. Pulido, ritmo y playtest | 🟡 flujo completo verificado por simulación; falta playtest humano cronometrado |
 
 ---
 

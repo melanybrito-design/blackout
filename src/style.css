@@ -252,7 +252,7 @@ body {
 .jr-polaroid {
   position: absolute;
   width: 21%;
-  padding: 7px 7px 26px;
+  padding: 7px 7px 34px;
   background: #f4f1e8;
   box-shadow: 3px 5px 10px rgba(0, 0, 0, 0.45);
   transform: rotate(var(--r));
@@ -277,11 +277,10 @@ body {
   left: 8px;
   right: 8px;
   bottom: 3px;
-  font: 16px/1 'Caveat', cursive;
+  font: 15px/0.95 "Caveat", cursive;
   color: #1f2f55;
-  white-space: nowrap;
+  max-height: 30px;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 .jr-polaroid .tape {
   position: absolute;

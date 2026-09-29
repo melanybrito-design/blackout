@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import type { System } from '../core/Game';
 import { applyPS2 } from '../render/ps2Material';
+import { lightShaft } from './atmosphere';
 
 export type FlickerMode = 'steady' | 'unstable' | 'dying' | 'off';
 
@@ -39,7 +40,14 @@ export class FluorescentLight implements System {
       this.group.add(this.light);
     }
     this.nextStutter = 2 + Math.random() * 6;
+    if (withLight) {
+      const shaft = lightShaft();
+      this.group.add(shaft.mesh);
+      this.setShaft = shaft.setLevel;
+    }
   }
+
+  private setShaft: ((v: number) => void) | null = null;
 
   update(dt: number, time: number): void {
     let v = 1;
@@ -69,5 +77,6 @@ export class FluorescentLight implements System {
     v *= this.level;
     this.tubeMat.color.copy(TUBE_COLOR).multiplyScalar(0.08 + 0.92 * v);
     if (this.light) this.light.intensity = this.baseIntensity * v;
+    this.setShaft?.(v);
   }
 }

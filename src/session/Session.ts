@@ -19,6 +19,7 @@ import { MirrorRig } from '../entities/MirrorRig';
 import { Mimic } from '../entities/Mimic';
 import { Keypad } from '../ui/Keypad';
 import { Script } from './Script';
+import { Dust } from '../world/atmosphere';
 
 export class Session implements System {
   readonly scene = new THREE.Scene();
@@ -55,6 +56,8 @@ export class Session implements System {
     game.setView(this.scene, this.camera);
 
     this.school = buildSchool(game);
+    const dust = game.add(new Dust(this.camera));
+    this.scene.add(dust.points);
     this.player = game.add(new PlayerController(this.camera, game.input, this.school.collision));
     this.player.surfaceAt = this.school.surfaceAt;
     this.player.onStep = (surface, running) => this.audio.step(surface, running);
