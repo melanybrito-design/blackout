@@ -1,0 +1,46 @@
+// Bus de eventos tipado: los sistemas se comunican sin conocerse entre sí.
+
+export type GameEvents = {
+  'game:start': void;
+  'game:pause': boolean;
+  'lang:changed': string;
+  'scare:minor': { id: string };
+  'scare:major': { id: string };
+  'light:flicker': { id: string };
+};
+
+type Handler<T> = (payload: T) => void;
+
+export class EventBus<E extends Record<string, unknown>> {
+  private handlers = new Map<keyof E, Set<Handler<never>>>();
+
+  on<K extends keyof E>(event: K, handler: Handler<E[K]>): () => void {
+    let set = this.handlers.get(event);
+    if (!set) {
+      set = new Set();
+      this.handlers.set(event, set);
+    }
+    set.add(handler as Handler<never>);
+    return () => set.delete(handler as Handler<never>);
+  }
+
+  once<K extends keyof E>(event: K, handler: Handler<E[K]>): () => void {
+    const off = this.on(event, (p) => {
+      off();
+      handler(p);
+    });
+    return off;
+  }
+
+  emit<K extends keyof E>(event: K, ...payload: E[K] extends void ? [] : [E[K]]): void {
+    const set = this.handlers.get(event);
+    if (!set) return;
+    for (const h of [...set]) (h as Handler<E[K] | undefined>)(payload[0]);
+  }
+
+  clear(): void {
+    this.handlers.clear();
+  }
+}
+
+export const bus = new EventBus<GameEvents>();

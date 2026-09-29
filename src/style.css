@@ -1,0 +1,53 @@
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+  color: #d8d2bd;
+  font-family: 'Special Elite', monospace;
+}
+#app canvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  image-rendering: pixelated;
+}
+#overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: rgba(0, 0, 0, 0.72);
+  cursor: pointer;
+  letter-spacing: 0.12em;
+  text-align: center;
+  user-select: none;
+}
+#overlay.hidden {
+  display: none;
+}
+#overlay .big {
+  font-size: clamp(28px, 6vw, 64px);
+  color: #b3121b;
+  text-shadow: 0 0 18px rgba(179, 18, 27, 0.35);
+}
+#overlay .small {
+  font-size: 13px;
+  opacity: 0.6;
+}
+.debug {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  margin: 0;
+  padding: 6px 8px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #7dff9a;
+  font: 16px/1.2 'VT323', monospace;
+  pointer-events: none;
+  white-space: pre;
+}
