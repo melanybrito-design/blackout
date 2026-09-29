@@ -153,8 +153,8 @@ export class Phone implements System {
     this.flash.shadow.mapSize.set(512, 512);
     this.flash.shadow.camera.near = 0.2;
     this.flash.shadow.bias = -0.002;
-    this.flash.position.set(0.12, -0.08, 0);
-    this.flash.target.position.set(0, 0, -3);
+    this.flash.position.set(0.1, -0.06, -0.45);
+    this.flash.target.position.set(0, 0, -4);
     camera.add(this.flash, this.flash.target);
     this.flash.map = this.flashCookie();
 
@@ -422,9 +422,9 @@ export class Phone implements System {
     // pose: guardado → sostenido → cámara (al centro, más cerca)
     this.sway.x += (-inp.mouseDX * 0.00012 - this.sway.x) * Math.min(1, dt * 10);
     this.sway.y += (inp.mouseDY * 0.00012 - this.sway.y) * Math.min(1, dt * 10);
-    const px = THREE.MathUtils.lerp(0.11, 0.0, c) + this.sway.x;
-    const py = THREE.MathUtils.lerp(-0.4, THREE.MathUtils.lerp(-0.1, -0.045, c), e) + this.sway.y;
-    const pz = THREE.MathUtils.lerp(-0.24, -0.17, c);
+    const px = THREE.MathUtils.lerp(0.125, 0.0, c) + this.sway.x;
+    const py = THREE.MathUtils.lerp(-0.4, THREE.MathUtils.lerp(-0.115, -0.045, c), e) + this.sway.y;
+    const pz = THREE.MathUtils.lerp(-0.3, -0.19, c);
     this.root.position.set(px, py, pz);
     this.root.rotation.set(THREE.MathUtils.lerp(0.12, 0.05, c), THREE.MathUtils.lerp(-0.3, 0, c), THREE.MathUtils.lerp(0.08, 0, c));
     this.lid.rotation.x = THREE.MathUtils.lerp(Math.PI * 0.98, -0.18, e);
