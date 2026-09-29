@@ -176,9 +176,9 @@ export function lockerFront(num: number): THREE.CanvasTexture {
 }
 
 /** Puerta de madera pintada con ventanita. */
-export function classroomDoor(): THREE.CanvasTexture {
-  return make(64, 128, 51, (ctx, r, w, h) => {
-    ctx.fillStyle = '#6b4a2e';
+export function classroomDoor(windowHole = true, tint = "#6b4a2e"): THREE.CanvasTexture {
+  return make(64, 128, windowHole ? 51 : 52, (ctx, r, w, h) => {
+    ctx.fillStyle = tint;
     ctx.fillRect(0, 0, w, h);
     for (let i = 0; i < 40; i++) {
       ctx.strokeStyle = `rgba(40,25,12,${0.15 + r() * 0.2})`;
@@ -188,15 +188,16 @@ export function classroomDoor(): THREE.CanvasTexture {
       ctx.bezierCurveTo(x + 3, h * 0.3, x - 3, h * 0.6, x + (r() - 0.5) * 4, h);
       ctx.stroke();
     }
-    ctx.fillStyle = '#10161a';
-    ctx.fillRect(16, 18, 32, 34);
-    ctx.strokeStyle = '#3b2616';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(16, 18, 32, 34);
+    if (windowHole) {
+      ctx.strokeStyle = "#3b2616";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(16, 18, 32, 34);
+    }
     ctx.fillStyle = '#b8b09a';
     ctx.fillRect(w - 12, h * 0.52, 7, 4);
     grime(ctx, r, w, h, 10);
     noise(ctx, r, w, h, 14);
+    if (windowHole) ctx.clearRect(18, 20, 28, 30);
   });
 }
 

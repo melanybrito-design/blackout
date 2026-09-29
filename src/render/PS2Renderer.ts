@@ -43,6 +43,7 @@ export class PS2Renderer {
         uDistort: { value: 0 },
         uFlash: { value: 0 },
         uEnabled: { value: 1 },
+        uBrightness: { value: 1 },
       },
     });
     this.postScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.post));

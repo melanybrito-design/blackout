@@ -20,6 +20,7 @@ uniform float uAberration;  // en píxeles internos
 uniform float uDistort;     // 0..1 distorsión de susto
 uniform float uFlash;       // 0..1 destello blanco
 uniform float uEnabled;
+uniform float uBrightness;
 varying vec2 vUv;
 
 float bayer4(vec2 p) {
@@ -63,7 +64,7 @@ void main() {
   col.g = texture2D(tScene, uv).g;
   col.b = texture2D(tScene, uv - dir * ab * 2.0).b;
 
-  col = toSRGB(col);
+  col = toSRGB(col * uBrightness);
 
   // Viñeta
   float v = smoothstep(0.85, 0.2, length(dir * vec2(1.0, 0.8)) * (1.0 + uVignette));
