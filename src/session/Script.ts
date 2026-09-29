@@ -466,7 +466,7 @@ export class Script {
 
   // =============== Áreas ===============
 
-  private onEnterArea(a: Area | 'none', from: Area | 'none'): void {
+  private onEnterArea(a: Area | "none", _from: Area | "none"): void {
     const s = this.s;
     if (a === 'patio' || a === 'none') return;
     if (a === 'hall' && !this.story.has('insideSchool')) {
@@ -490,8 +490,9 @@ export class Script {
       }
       if (this.stage === 'free') this.go('s3_ramp');
     }
-    if (a === 'corridor' && from === 'bathroom' && this.story.has('s3Done') && !this.story.has('s4Done')) {
-      s.director.arm('s4');
+    if (a !== 'bathroom' && this.pendingS4) {
+      this.pendingS4 = false;
+      this.s4();
     }
     if (a === 'gym' && !this.story.has('chaseDone')) {
       this.endChase();
@@ -646,11 +647,20 @@ export class Script {
       s.director.majorFinished();
       this.goal('goal.leave');
       this.go('free');
+      s.director.arm('s4');
     });
   }
 
+  private pendingS4 = false;
+
   private s4(): void {
     const s = this.s;
+    if (s.area === 'bathroom') {
+      // Espera a que salga del baño: el apagón empieza en el pasillo.
+      this.pendingS4 = true;
+      s.scripted = false;
+      return;
+    }
     s.scripted = true;
     s.audio.duck(14, 0.004);
     // Apagón que viaja por el colegio
