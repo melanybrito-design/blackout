@@ -1,5 +1,6 @@
 // Pantallas HTML: advertencia inicial, menú (cintas sobre el afiche), opciones, créditos y pausa.
 import { getLang, setLang, t } from '../i18n';
+import { keycaps } from './Hud';
 import { saveSettings, type Settings } from '../core/Settings';
 import type { AudioEngine } from '../audio/AudioEngine';
 
@@ -13,6 +14,7 @@ function el(html: string): HTMLDivElement {
 
 export function showWarning(onContinue: () => void): void {
   const w = el(`<div class="screen warning">
+    <video class="warning-film" src="/assets/video/intro.mp4" autoplay muted loop playsinline preload="metadata"></video>
     <div class="warn-box">
       <div class="warn-title">${t('warn.title')}</div>
       <p>${t('warn.body')}</p>
@@ -153,7 +155,8 @@ export function showPause(a: { onResume: () => void; onOptions: () => void; onMe
       <button data-a="resume" style="--r:-1.5deg">${t('pause.continue')}</button>
       <button data-a="options" style="--r:1deg">${t('pause.options')}</button>
       <button data-a="menu" style="--r:-1deg">${t('pause.menu')}</button>
-    </div></div>`);
+    </div>
+    <div class="pause-controls">${keycaps(t('intro.controls.body')).replace(/\n/g, '<br/>')}</div></div>`);
   root().appendChild(p);
   p.querySelectorAll<HTMLButtonElement>('[data-a]').forEach((b) =>
     b.addEventListener('click', () => {

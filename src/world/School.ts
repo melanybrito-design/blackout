@@ -35,15 +35,16 @@ import {
   wetConcrete,
 } from '../textures/world';
 import { posterCanvas } from '../textures/poster';
-import { toTexture } from '../textures/canvas';
-import { CollisionWorld } from './Collision';
+import { canvas, toTexture } from '../textures/canvas';
+import { optionalTexture } from '../textures/asset';
+import { CollisionWorld, type AABB } from './Collision';
 import { Door } from './Door';
 import { FluorescentLight, type FlickerMode } from './FluorescentLight';
 import { LevelBuilder, type MatDef } from './LevelBuilder';
 import { chairGeometry, deskGeometry, instanced, Lightning, mergeByMaterial, ps2Basic, Rain, seatedFigure, type Placement } from './props';
 import type { Surface } from '../player/PlayerController';
 
-export type Area = 'patio' | 'hall' | 'corridor' | 'classroom' | 'bathroom' | 'long' | 'gym';
+export type Area = 'patio' | 'hall' | 'corridor' | 'classroom' | 'bathroom' | 'long' | 'gym' | 'staff' | 'lab' | 'janitor';
 
 export const AREAS: Record<Area, [number, number, number, number]> = {
   patio: [-8, 8, 2, 20],
@@ -53,7 +54,19 @@ export const AREAS: Record<Area, [number, number, number, number]> = {
   bathroom: [-8.5, -1.5, -29, -19],
   long: [1.5, 42, -37, -34],
   gym: [42, 58, -44, -27],
+  staff: [-8.5, -1.5, -19, -12.6],
+  lab: [1.5, 9.5, -27, -17],
+  janitor: [-6.5, -1.5, -36, -30],
 };
+
+/** Posición en z de las cajas de escalera que cortan el pasillo: piso 1 | piso 2 | piso 3. */
+export const FLOOR_WALLS = [-19.4, -29.6] as const;
+
+/** Piso (nivel) en el que está un punto del colegio. */
+export function floorAt(z: number, x = 0): 1 | 2 | 3 {
+  if (x > 1.6 && z < -33) return 3;
+  return z > FLOOR_WALLS[0] ? 1 : z > FLOOR_WALLS[1] ? 2 : 3;
+}
 
 export interface School {
   collision: CollisionWorld;
@@ -64,6 +77,12 @@ export interface School {
     locker17: Door;
     mid: Door;
     gym: Door;
+    staff: Door;
+    lab: Door;
+    janitor: Door;
+    /** Rejas de las escaleras: al piso 2 y al piso 3. */
+    stairs2: Door;
+    stairs3: Door;
   };
   lights: Record<Area, FluorescentLight[]>;
   allLights: FluorescentLight[];
@@ -90,6 +109,8 @@ export interface School {
   lightning: Lightning;
   rain: Rain;
   gymGroup: THREE.Group;
+  /** Puertas de los cubículos del baño (se abren con E). */
+  stalls: Array<{ mesh: THREE.Mesh; collider: AABB; open: boolean; center: THREE.Vector3 }>;
   surfaceAt(x: number, z: number): Surface;
   areaAt(x: number, z: number): Area | null;
   /** Pone todas las luces de un área (o todas) en un modo. */
@@ -106,15 +127,17 @@ export function buildSchool(game: Game): School {
   const B = new LevelBuilder(scene, collision);
 
   // ---------- Materiales ----------
+  const facadeTex = optionalTexture(facade(), 'textures/facade.png');
+  facadeTex.offset.x = 0.5;
   const M = {
-    wall: mat(schoolWall(), [2, 3]),
-    floor: mat(floorTiles(), [1.6, 1.6]),
-    ceil: mat(ceilingTiles(), [0.6, 0.6]),
-    bath: mat(bathTiles(), [1.2, 1.2]),
-    wood: mat(gymFloor(), [2, 2]),
-    concrete: mat(wetConcrete(), [3, 3]),
-    facade: mat(facade(), [4, 3.5]),
-    perimeter: mat(perimeterWall(), [3, 3]),
+    wall: mat(optionalTexture(schoolWall(), 'textures/wall_school.png'), [2, 3]),
+    floor: mat(optionalTexture(floorTiles(), 'textures/floor_tiles.png'), [1.6, 1.6]),
+    ceil: mat(optionalTexture(ceilingTiles(), 'textures/ceiling_tiles.png'), [0.6, 0.6]),
+    bath: mat(optionalTexture(bathTiles(), 'textures/bath_tiles.png'), [1.2, 1.2]),
+    wood: mat(optionalTexture(gymFloor(), 'textures/gym_floor_tile.png'), [2.4, 1.8]),
+    concrete: mat(optionalTexture(wetConcrete(), 'textures/wet_concrete.png'), [3, 3]),
+    facade: mat(facadeTex, [16, 7]),
+    perimeter: mat(optionalTexture(perimeterWall(), 'textures/perimeter_wall.png'), [3, 3]),
     dark: mat(null, [1, 1], 0x16181a),
     frame: mat(null, [1, 1], 0x2a2018),
     metal: mat(null, [1, 1], 0x3a4448),
@@ -130,6 +153,9 @@ export function buildSchool(game: Game): School {
     bathroom: [],
     long: [],
     gym: [],
+    staff: [],
+    lab: [],
+    janitor: [],
   };
   const allLights: FluorescentLight[] = [];
   const light = (area: Area, x: number, y: number, z: number, mode: FlickerMode, withLight: boolean, rotY = 0, intensity?: number) => {
@@ -244,8 +270,9 @@ export function buildSchool(game: Game): School {
   // ================= PASILLO PRINCIPAL =================
   B.floor(-1.5, 1.5, -37, -4, M.floor);
   B.ceiling(-1.5, 1.5, -37, -4, M.ceil);
-  B.wallX(-1.5, -37, -4, 3, M.wall, [[-24.6, -23.4]]);
-  B.wallX(1.5, -34, -4, 3, M.wall, [[-10.6, -9.4]]);
+  // Huecos de puerta: portería, baño y sala de profesores al oeste; laboratorio y 2°B al este.
+  B.wallX(-1.5, -37, -4, 3, M.wall, [[-33.6, -32.4], [-24.6, -23.4], [-14.6, -13.4]]);
+  B.wallX(1.5, -34, -4, 3, M.wall, [[-22.6, -21.4], [-10.6, -9.4]]);
 
   // Casilleros 10–16, 17 (con puerta propia), 18–25
   const LW = 0.42;
@@ -265,7 +292,8 @@ export function buildSchool(game: Game): School {
   // Casillero 17: cuerpo hueco + puerta
   B.box(-1.5, -1.05, 0, 0.02, z17 - LW, z17, M.metal, { collide: false });
   B.box(-1.5, -1.05, 1.83, 1.85, z17 - LW, z17, M.metal, { collide: false });
-  B.box(-1.5, -1.47, 0, 1.85, z17 - LW, z17, M.metal, { collide: false });
+  // El fondo va por delante de la cara del muro (x = -1.4); si no, se ve la pared dentro del casillero.
+  B.box(-1.4, -1.37, 0, 1.85, z17 - LW, z17, M.dark, { collide: false });
   B.box(-1.5, -1.05, 1.1, 1.12, z17 - LW, z17, M.metal, { collide: false });
   collision.add(-1.5, -1.12, z17 - LW, z17, 0, 1.85);
   const locker17 = new Door(scene, collision, {
@@ -280,8 +308,14 @@ export function buildSchool(game: Game): School {
   });
   game.add(locker17);
   // Foto de Lucía y llave dentro del casillero
-  const photo = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.13), ps2Lambert({ color: 0xe8e2d0 }));
-  photo.position.set(-1.46, 1.35, z17 - LW / 2);
+  const [blank, blankCtx] = canvas(8, 8);
+  blankCtx.fillStyle = '#e8e2d0';
+  blankCtx.fillRect(0, 0, 8, 8);
+  const photo = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.14, 0.104),
+    ps2Lambert({ map: optionalTexture(toTexture(blank, false), 'characters/photo_lucia_print.png') }),
+  );
+  photo.position.set(-1.36, 1.38, z17 - LW / 2);
   photo.rotation.y = Math.PI / 2;
   photo.rotation.z = 0.1;
   scene.add(photo);
@@ -290,9 +324,20 @@ export function buildSchool(game: Game): School {
   scene.add(key);
 
   // Puertas del pasillo
+  // Puertas: hoja pintada de Higgsfield (con ventanita transparente en la 2°B) sobre el respaldo procedural.
   const doorMat2B = applyPS2(
-    new THREE.MeshLambertMaterial({ map: classroomDoor(true), alphaTest: 0.5, side: THREE.DoubleSide }),
+    new THREE.MeshLambertMaterial({
+      map: optionalTexture(classroomDoor(true), 'textures/door_window.png'),
+      alphaTest: 0.5,
+      side: THREE.DoubleSide,
+    }),
   );
+  /** Puerta ciega: la foto es azul, así que cada puerta se distingue con un tinte. */
+  const solidDoor = (fallbackTint: string, tint: number) => {
+    const m = ps2Lambert({ map: classroomDoor(false, fallbackTint) });
+    optionalTexture(m.map!, 'textures/door_solid.png', () => m.color.setHex(tint));
+    return m;
+  };
   (doorMat2B.map as THREE.Texture).wrapS = THREE.ClampToEdgeWrapping;
   const room2B = new Door(scene, collision, {
     hinge: new THREE.Vector3(1.5, 0, -9.4),
@@ -311,7 +356,7 @@ export function buildSchool(game: Game): School {
     axis: 'z',
     dir: -1,
     openAngle: 1.45,
-    material: ps2Lambert({ map: classroomDoor(false, '#56606a') }),
+    material: solidDoor('#56606a', 0xb9c2c4),
     locked: true,
   });
   bath.lockedMessage = 'door.lockedBath';
@@ -325,6 +370,9 @@ export function buildSchool(game: Game): School {
   };
   plate('plate.2b', 1.39, -10, -Math.PI / 2);
   plate('plate.bath', -1.39, -24, Math.PI / 2);
+  plate('plate.lab', 1.39, -22, -Math.PI / 2);
+  plate('plate.staff', -1.39, -14, Math.PI / 2);
+  plate('plate.janitor', -1.39, -33, Math.PI / 2);
 
   // Dibujos infantiles
   for (let i = 0; i < 6; i++) {
@@ -354,7 +402,7 @@ export function buildSchool(game: Game): School {
 
   // Huellas descalzas espectrales: de la entrada del pasillo a la puerta de la 2°B
   const footprints = new THREE.Group();
-  const fpMat = new THREE.MeshBasicMaterial({ map: footprint(), transparent: true, depthWrite: false });
+  const fpMat = new THREE.MeshBasicMaterial({ map: optionalTexture(footprint(), 'textures/decal_footprints.png'), transparent: true, depthWrite: false });
   const fpGeo = new THREE.PlaneGeometry(0.11, 0.24);
   const path: Array<[number, number]> = [];
   for (let i = 0; i < 14; i++) {
@@ -409,7 +457,7 @@ export function buildSchool(game: Game): School {
     scene.add(clock);
   }
   const ext = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8), ps2Lambert({ color: 0x8e1414 }));
-  ext.position.set(1.36, 1.05, -19.5);
+  ext.position.set(1.36, 1.05, -16.8);
   scene.add(ext);
   const bin = new THREE.Mesh(
     new THREE.CylinderGeometry(0.2, 0.17, 0.55, 10, 1, true),
@@ -446,7 +494,7 @@ export function buildSchool(game: Game): School {
   scene.add(recorder);
   // Ventanas
   for (const x of [3.5, 5.5, 7.5]) {
-    const wm = ps2Basic({ map: nightWindow() });
+    const wm = ps2Basic({ map: optionalTexture(nightWindow(), 'textures/night_window.png') });
     lightning.addWindow(wm);
     const w = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.3), wm);
     w.position.set(x, 1.7, -14.88);
@@ -494,7 +542,7 @@ export function buildSchool(game: Game): School {
   // Sangre en el lavamanos 2 y uñas en el desagüe
   const sinkBlood = new THREE.Mesh(
     new THREE.PlaneGeometry(0.45, 0.45),
-    ps2Lambert({ map: bloodSplat(77), transparent: true, depthWrite: false }),
+    ps2Lambert({ map: optionalTexture(bloodSplat(77), 'textures/decal_blood_splat.png'), transparent: true, depthWrite: false }),
   );
   sinkBlood.rotation.x = -Math.PI / 2;
   sinkBlood.position.set(-8.12, 0.925, -23);
@@ -530,7 +578,7 @@ export function buildSchool(game: Game): School {
   scene.add(writing);
   const cracks = new THREE.Mesh(
     new THREE.PlaneGeometry(3, 1.15),
-    new THREE.MeshBasicMaterial({ map: mirrorCracks(), transparent: true, depthWrite: false }),
+    new THREE.MeshBasicMaterial({ map: optionalTexture(mirrorCracks(), 'textures/decal_cracks_clean.png'), transparent: true, depthWrite: false }),
   );
   cracks.position.set(-8.33, 1.7, -23.2);
   cracks.rotation.y = Math.PI / 2;
@@ -549,6 +597,7 @@ export function buildSchool(game: Game): School {
     const x = -8.3 + i * 1.5;
     B.box(x - 0.03, x + 0.03, 0.15, 2.1, -20.4, -19, M.stall);
   }
+  const stalls: School['stalls'] = [];
   for (let i = 0; i < 3; i++) {
     const x = -8.3 + i * 1.5;
     const open = i === 1;
@@ -557,12 +606,172 @@ export function buildSchool(game: Game): School {
     d.position.set(x + 0.03, 0.15, -20.4);
     d.rotation.y = open ? 1.2 : 0.15;
     scene.add(d);
-    if (!open) collision.add(x, x + 1.45, -20.45, -20.35, 0, 2);
+    const collider = collision.add(x, x + 1.45, -20.45, -20.35, 0, 2);
+    collider.enabled = !open;
+    stalls.push({ mesh: d, collider, open, center: new THREE.Vector3(x + 0.75, 1.1, -20.4) });
   }
   // Balde y trapero
   B.box(-3, -2.6, 0, 0.35, -28.5, -28.1, M.dark);
   light('bathroom', -5, 2.95, -22, 'steady', true, Math.PI / 2);
   light('bathroom', -5, 2.95, -26, 'unstable', true, Math.PI / 2);
+
+  // ================= SALAS PARA EXPLORAR (primer piso) =================
+  // No traban la historia: se abren con E y cuentan lo que pasó con las seis.
+  const sideDoor = (x: number, zHinge: number, tint: number) => {
+    const d = new Door(scene, collision, {
+      hinge: new THREE.Vector3(x, 0, zHinge),
+      width: 1.2,
+      axis: 'z',
+      dir: -1,
+      openAngle: x < 0 ? 1.45 : -1.45,
+      material: solidDoor('#5a5246', tint),
+    });
+    game.add(d);
+    return d;
+  };
+  const sheet = (x: number, y: number, z: number, ry: number, color = 0xe6e1d2) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(0.21, 0.29), ps2Lambert({ color }));
+    m.rotation.set(-Math.PI / 2, 0, ry);
+    m.position.set(x, y, z);
+    scene.add(m);
+  };
+
+  // ---- Sala de profesores (oeste, entre los casilleros y el baño) ----
+  B.floor(-8.5, -1.5, -19, -12.6, M.wood);
+  B.ceiling(-8.5, -1.5, -19, -12.6, M.ceil);
+  B.wallX(-8.5, -19, -12.6, 3, M.wall);
+  B.wallZ(-12.6, -8.5, -1.5, 3, M.wall);
+  B.wallZ(-18.86, -8.5, -1.6, 3, M.wall, [], 2.2, 0.06);
+  const staffDoor = sideDoor(-1.5, -13.4, 0xc9b596);
+  B.box(-6.2, -3.8, 0.7, 0.76, -16.6, -15.2, M.frame); // mesa de reuniones
+  B.box(-6.1, -6.0, 0, 0.7, -16.5, -15.3, M.frame, { collide: false });
+  B.box(-4.0, -3.9, 0, 0.7, -16.5, -15.3, M.frame, { collide: false });
+  B.box(-8.3, -7.5, 0, 0.45, -18.5, -16.3, M.dark); // sillón
+  B.box(-8.3, -8.1, 0.45, 0.9, -18.5, -16.3, M.dark, { collide: false });
+  B.box(-7.6, -5.4, 0, 1.9, -13.1, -12.7, M.metal); // archivero
+  B.box(-3.2, -2.2, 0, 0.9, -13.15, -12.7, M.frame); // mesita del café
+  const staffChairs: Placement[] = [
+    { x: -5.6, z: -14.7, ry: 0 },
+    { x: -4.4, z: -14.8, ry: 0.3 },
+    { x: -5.4, z: -17.1, ry: Math.PI },
+    { x: -4.2, z: -17.2, ry: Math.PI - 0.5 },
+  ];
+  instanced(scene, chairGeometry(), chairMat, staffChairs);
+  for (const p of staffChairs) collision.add(p.x - 0.22, p.x + 0.22, p.z - 0.22, p.z + 0.22, 0, 0.9);
+  const staffBoard = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.1), ps2Lambert({ map: bulletinBoard(posterCanvas()) }));
+  staffBoard.position.set(-8.38, 1.6, -15.2);
+  staffBoard.rotation.y = Math.PI / 2;
+  scene.add(staffBoard);
+  sheet(-4.5, 0.766, -15.9, 0.4); // libro de actas
+  const seized = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.14, 0.24), ps2Lambert({ color: 0x6b5132 }));
+  seized.position.set(-5.5, 0.83, -15.8);
+  seized.rotation.y = 0.3;
+  scene.add(seized);
+  light('staff', -5, 2.95, -15.8, 'unstable', true, Math.PI / 2, 9);
+
+  // ---- Laboratorio (este, al sur de la 2°B) ----
+  B.floor(1.5, 9.5, -27, -17, M.floor);
+  B.ceiling(1.5, 9.5, -27, -17, M.ceil);
+  B.wallZ(-17, 1.5, 9.5, 3, M.wall);
+  B.wallZ(-27, 1.5, 9.5, 3, M.wall);
+  B.wallX(9.5, -27, -17, 3, M.wall);
+  const labDoor = sideDoor(1.5, -21.4, 0xb9c2c4);
+  for (const z of [-19.4, -22, -24.6]) {
+    B.box(3.4, 8.0, 0, 0.86, z - 0.4, z + 0.4, M.dark); // mesones
+    B.box(3.35, 8.05, 0.86, 0.9, z - 0.45, z + 0.45, M.porcelain, { collide: false });
+  }
+  B.box(9.0, 9.4, 0, 2.0, -26.2, -17.8, M.frame); // estantería de frascos
+  B.box(8.95, 9.4, 0.98, 1.02, -26.2, -17.8, M.metal, { collide: false });
+  B.box(8.95, 9.4, 1.48, 1.52, -26.2, -17.8, M.metal, { collide: false });
+  B.box(2.0, 3.0, 0, 0.9, -17.55, -17.1, M.porcelain); // lavatorio
+  const jars: Placement[] = [];
+  for (let i = 0; i < 16; i++) jars.push({ x: 9.05, y: (i % 2 ? 1.6 : 1.1) + 0.01, z: -18.3 - i * 0.5 });
+  instanced(scene, new THREE.CylinderGeometry(0.07, 0.07, 0.2, 8), ps2Lambert({ color: 0x6f8f6a }), jars);
+  const fallen = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.2, 8), ps2Lambert({ color: 0x6f8f6a }));
+  fallen.position.set(8.3, 0.07, -21.2);
+  fallen.rotation.z = Math.PI / 2;
+  scene.add(fallen);
+  for (const x of [4, 7]) {
+    const wm = ps2Basic({ map: optionalTexture(nightWindow(), 'textures/night_window.png') });
+    lightning.addWindow(wm);
+    const w = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.3), wm);
+    w.position.set(x, 1.7, -26.88);
+    scene.add(w);
+  }
+  sheet(5.6, 0.906, -22.05, -0.3, 0xd9d2b4); // cuaderno de laboratorio
+  light('lab', 4.2, 2.95, -22, 'dying', true, Math.PI / 2, 9);
+  light('lab', 7.6, 2.95, -22, 'off', false, Math.PI / 2);
+
+  // ---- Portería (oeste, al sur del baño) ----
+  B.floor(-6.5, -1.5, -36, -30, M.concrete);
+  B.ceiling(-6.5, -1.5, -36, -30, M.ceil);
+  B.wallZ(-30, -6.5, -1.5, 3, M.perimeter);
+  B.wallZ(-36, -6.5, -1.5, 3, M.perimeter);
+  B.wallX(-6.5, -36, -30, 3, M.perimeter);
+  const janitorDoor = sideDoor(-1.5, -32.4, 0x8f9aa6);
+  B.box(-6.4, -5.9, 0, 2.0, -35.6, -30.4, M.metal); // estantes
+  B.box(-4.8, -3.2, 0.7, 0.76, -35.8, -35.1, M.frame); // escritorio
+  B.box(-4.7, -4.6, 0, 0.7, -35.7, -35.2, M.frame, { collide: false });
+  B.box(-3.4, -3.3, 0, 0.7, -35.7, -35.2, M.frame, { collide: false });
+  B.box(-2.4, -2.0, 0, 0.35, -30.9, -30.5, M.dark); // balde
+  instanced(scene, chairGeometry(), chairMat, [{ x: -4, z: -34.5, ry: Math.PI }]);
+  collision.add(-4.22, -3.78, -34.72, -34.28, 0, 0.9);
+  const keyBoard = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.6), ps2Lambert({ color: 0x4a3a28 }));
+  keyBoard.position.set(-3.8, 1.55, -30.12);
+  keyBoard.rotation.y = Math.PI;
+  scene.add(keyBoard);
+  const radio = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.16, 0.1), ps2Lambert({ color: 0x2a2a2c }));
+  radio.position.set(-3.5, 0.84, -35.5);
+  scene.add(radio);
+  sheet(-4.3, 0.766, -35.45, 0.15);
+  light('janitor', -4, 2.95, -33, 'unstable', true, Math.PI / 2, 7);
+
+  // ================= ESCALERAS (los niveles son los pisos) =================
+  // El pasillo principal se corta en tres tramos, uno por piso. Cada corte es una caja de escalera:
+  // del lado de abajo se ven los peldaños que suben tras una reja; del lado de arriba, el hueco que baja.
+  const voidMat = ps2Basic({ color: 0x020303 });
+  const barTex = chainFence();
+  barTex.wrapS = barTex.wrapT = THREE.RepeatWrapping;
+  barTex.repeat.set(4.2, 3.4);
+  const stairwell = (zWall: number, upKey: string, downKey: string) => {
+    B.wallZ(zWall, -1.5, 1.5, 3, M.wall);
+    // Peldaños que suben (lado norte = piso de abajo)
+    for (let i = 0; i < 6; i++) {
+      const z2 = zWall + 0.1 + (6 - i) * 0.3;
+      B.box(-1.4, 1.4, 0, (i + 1) * 0.18, z2 - 0.3, z2, M.concrete, { collide: false });
+    }
+    collision.add(-1.5, 1.5, zWall, zWall + 1.9, 0, 3);
+    const up = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 1.95), voidMat);
+    up.position.set(0, 2.05, zWall + 0.115);
+    scene.add(up);
+    B.box(-1.4, -1.34, 0, 1.6, zWall + 0.1, zWall + 1.9, M.metal, { collide: false }); // barandas
+    B.box(1.34, 1.4, 0, 1.6, zWall + 0.1, zWall + 1.9, M.metal, { collide: false });
+    plate(upKey, 1.39, zWall + 2.6, -Math.PI / 2);
+    const gate = new Door(scene, collision, {
+      hinge: new THREE.Vector3(-1.45, 0, zWall + 2.05),
+      width: 2.9,
+      height: 2.6,
+      axis: 'x',
+      dir: 1,
+      openAngle: 1.45,
+      thickness: 0.05,
+      material: applyPS2(new THREE.MeshLambertMaterial({ map: barTex, alphaTest: 0.5, side: THREE.DoubleSide, color: 0x9aa0a0 })),
+      locked: true,
+    });
+    game.add(gate);
+    // Hueco que baja (lado sur = piso de arriba)
+    const down = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 2.2), voidMat);
+    down.position.set(0, 1.1, zWall - 0.115);
+    down.rotation.y = Math.PI;
+    scene.add(down);
+    B.box(-0.95, -0.85, 0, 2.3, zWall - 0.2, zWall - 0.1, M.frame, { collide: false });
+    B.box(0.85, 0.95, 0, 2.3, zWall - 0.2, zWall - 0.1, M.frame, { collide: false });
+    B.box(-0.95, 0.95, 2.2, 2.3, zWall - 0.2, zWall - 0.1, M.frame, { collide: false });
+    plate(downKey, -1.39, zWall - 0.9, Math.PI / 2);
+    return gate;
+  };
+  const stairs2 = stairwell(FLOOR_WALLS[0], 'plate.up2', 'plate.down1');
+  const stairs3 = stairwell(FLOOR_WALLS[1], 'plate.up3', 'plate.down2');
 
   // ================= PASILLO LARGO =================
   B.floor(-1.5, 42, -37, -34, M.floor);
@@ -572,7 +781,7 @@ export function buildSchool(game: Game): School {
   B.wallX(42, -37, -34, 3, M.wall, [[-36.1, -34.9]]);
   B.wallX(22, -37, -34, 3, M.wall, [[-36.1, -34.9]], 2.2, 0.15);
   for (let x = 5; x < 41; x += 6) {
-    const wm = ps2Basic({ map: nightWindow() });
+    const wm = ps2Basic({ map: optionalTexture(nightWindow(), 'textures/night_window.png') });
     lightning.addWindow(wm);
     const w = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.1), wm);
     w.position.set(x, 1.75, -34.12);
@@ -598,7 +807,7 @@ export function buildSchool(game: Game): School {
     axis: 'z',
     dir: -1,
     openAngle: -1.4,
-    material: ps2Lambert({ map: classroomDoor(false, '#4a3a2a') }),
+    material: solidDoor('#4a3a2a', 0xc9b596),
     locked: true,
   });
   mid.lockedMessage = 'door.stuck';
@@ -629,7 +838,7 @@ export function buildSchool(game: Game): School {
     axis: 'z',
     dir: -1,
     openAngle: -1.5,
-    material: ps2Lambert({ map: classroomDoor(false, '#3b4b58') }),
+    material: solidDoor('#3b4b58', 0x8f9aa6),
     locked: true,
   });
   gymDoor.lockedMessage = 'door.gymCode';
@@ -698,7 +907,7 @@ export function buildSchool(game: Game): School {
 
   return {
     collision,
-    doors: { gate, room2B, bath, locker17, mid, gym: gymDoor },
+    doors: { gate, room2B, bath, locker17, mid, gym: gymDoor, staff: staffDoor, lab: labDoor, janitor: janitorDoor, stairs2, stairs3 },
     lights,
     allLights,
     footprints,
@@ -719,10 +928,12 @@ export function buildSchool(game: Game): School {
     lightning,
     rain,
     gymGroup,
+    stalls,
     surfaceAt(x, z) {
       const a = areaAt(x, z);
       if (a === 'patio') return 'concrete';
-      if (a === 'classroom' || a === 'gym') return 'wood';
+      if (a === 'classroom' || a === 'gym' || a === 'staff') return 'wood';
+      if (a === 'janitor') return 'concrete';
       if (a === 'long' && x > 25.5 && x < 31.5) return 'water';
       return 'tile';
     },

@@ -20,6 +20,26 @@ export const POSTER_W = 512;
 export const POSTER_H = 724;
 
 const portraitCache = new Map<string, HTMLCanvasElement>();
+const generatedPortraits = new Map<string, HTMLImageElement>();
+
+const portraitListeners: Array<() => void> = [];
+let portraitsRequested = false;
+
+/** Carga (una sola vez) los retratos de Higgsfield y avisa cada vez que llega uno. */
+export function preloadPosterPortraits(onReady?: () => void): void {
+  if (onReady) portraitListeners.push(onReady);
+  if (portraitsRequested) return;
+  portraitsRequested = true;
+  for (const girl of GIRLS) {
+    const image = new Image();
+    image.onload = () => {
+      generatedPortraits.set(girl.id, image);
+      portraitCache.clear();
+      for (const fn of portraitListeners) fn();
+    };
+    image.src = `/assets/characters/girl_${girl.id}.png`;
+  }
+}
 
 function portrait(i: number, lookX: number, lookY: number, zoom: number): HTMLCanvasElement {
   const key = `${i}:${lookX.toFixed(2)}:${lookY.toFixed(2)}:${zoom}`;
@@ -33,7 +53,14 @@ function portrait(i: number, lookX: number, lookY: number, zoom: number): HTMLCa
     ctx.scale(zoom, zoom);
     ctx.translate(-S / 2, -S / 2);
   }
-  drawFace(ctx, { seed: g.seed, hair: g.hair, lookX, lookY }, S);
+  const generated = generatedPortraits.get(g.id);
+  if (generated) {
+    // La foto no puede mover los ojos: cuando "mira", la cara se acerca y se ladea hacia el cursor.
+    const look = lookX !== 0 || lookY !== 0;
+    const k = look ? 1.16 : 1;
+    const size = S * k;
+    ctx.drawImage(generated, (S - size) / 2 + lookX * 7, (S - size) / 2 + lookY * 5 - (look ? 4 : 0), size, size);
+  } else drawFace(ctx, { seed: g.seed, hair: g.hair, lookX, lookY }, S);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   photocopy(ctx, S, g.seed, 0.9);
   if (portraitCache.size > 60) portraitCache.clear();

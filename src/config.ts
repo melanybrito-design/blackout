@@ -33,19 +33,19 @@ export const PLAYER = {
 
 export const DIRECTOR = {
   /** Segundos mínimos entre screamers mayores. */
-  majorCooldown: 90,
+  majorCooldown: 45,
   /** Falsas alarmas mínimas entre mayores. */
-  fakeOutsBetweenMajors: 3,
-  relaxMin: 25,
-  relaxMax: 40,
-  minorMin: 20,
-  minorMax: 45,
-  mediumMin: 60,
-  mediumMax: 120,
+  fakeOutsBetweenMajors: 2,
+  relaxMin: 10,
+  relaxMax: 16,
+  minorMin: 12,
+  minorMax: 26,
+  mediumMin: 35,
+  mediumMax: 70,
   /** Quieto más de esto = guardia baja. */
   lowGuardStill: 4,
   /** Si un mayor espera más que esto, se fuerza en la siguiente oportunidad. */
-  majorMaxWait: 35,
+  majorMaxWait: 15,
   silenceMin: 1.5,
   silenceMax: 3,
 } as const;

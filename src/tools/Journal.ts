@@ -5,6 +5,7 @@ import { GIRLS } from '../narrative/girls';
 import { portraitCanvas } from '../textures/faces';
 import { posterCanvas } from '../textures/poster';
 import { canvas } from '../textures/canvas';
+import { optionalImage } from '../textures/asset';
 import { t } from '../i18n';
 import { bus } from '../core/EventBus';
 import type { AudioEngine } from '../audio/AudioEngine';
@@ -12,6 +13,8 @@ import type { AudioEngine } from '../audio/AudioEngine';
 type Tab = 'clues' | 'people' | 'goal';
 
 /** Posición de cada polaroid en el tablero (% del área) y rotación. */
+const PEOPLE_KEY = 'uvv.people';
+
 const LAYOUT: Record<string, [number, number, number]> = {
   c1: [6, 8, -4],
   c2: [36, 4, 3],
@@ -34,8 +37,12 @@ export class Journal {
   private note!: HTMLDivElement;
   private deductions: string[] = [];
   private thumbs = new Map<string, string>();
-  private drag: { from: string; line: SVGLineElement } | null = null;
-  private knownPeople = new Set<string>(['lucia']);
+  /** `sticky`: se eligió una pista con un clic y el hilo sigue al cursor hasta el segundo clic. */
+  private drag: { from: string; line: SVGLineElement; sticky?: boolean } | null = null;
+  /** Ficha de cada chica: las notas (claves i18n) que el jugador fue reuniendo sobre ella. */
+  private people = new Map<string, string[]>([['lucia', ['people.lucia']]]);
+  /** Fotos opcionales de Higgsfield para las miniaturas (si faltan, queda el dibujo procedural). */
+  private photos = new Map<string, HTMLImageElement>();
 
   onOpenChange: ((open: boolean) => void) | null = null;
   onLink: ((r: LinkResult) => void) | null = null;
@@ -51,6 +58,15 @@ export class Journal {
     window.addEventListener('mousemove', (e) => this.onMove(e));
     window.addEventListener('mouseup', (e) => this.onUp(e));
     bus.on('lang:changed', () => this.isOpen && this.render());
+    for (const [id, path] of [
+      ['c2', 'characters/girl_daniela.png'],
+      ['c6', 'characters/photo_lucia_print.png'],
+    ] as const)
+      optionalImage(path, (image) => {
+        this.photos.set(id, image);
+        this.thumbs.delete(id);
+        if (this.isOpen) this.render();
+      });
   }
 
   // ---------- API ----------
@@ -62,8 +78,29 @@ export class Journal {
     return added;
   }
 
-  knowPerson(id: string): void {
-    this.knownPeople.add(id);
+  /** Agrega una nota a la ficha de una chica. Devuelve true si era nueva. */
+  knowPerson(id: string, note = `people.${id}`): boolean {
+    const notes = this.people.get(id) ?? [];
+    if (notes.includes(note)) return false;
+    notes.push(note);
+    this.people.set(id, notes);
+    try {
+      localStorage.setItem(PEOPLE_KEY, JSON.stringify([...this.people]));
+    } catch {
+      /* sin almacenamiento */
+    }
+    if (this.isOpen) this.render();
+    return true;
+  }
+
+  /** Recupera las fichas de la partida guardada. */
+  loadPeople(): void {
+    try {
+      const raw = localStorage.getItem(PEOPLE_KEY);
+      if (raw) for (const [id, notes] of JSON.parse(raw) as Array<[string, string[]]>) this.people.set(id, notes);
+    } catch {
+      /* sin almacenamiento */
+    }
   }
 
   setGoal(key: string): void {
@@ -75,6 +112,16 @@ export class Journal {
   restoreLink(a: string, b: string): void {
     const r = this.graph.link(a, b);
     if (r.ok) this.deductions.push(r.connection.deduction);
+  }
+
+  /** El personaje ata dos pistas por su cuenta (al intentar la puerta que esa deducción abre). */
+  autoLink(a: string, b: string): boolean {
+    const r = this.graph.link(a, b);
+    if (!r.ok || !r.isNew) return false;
+    this.deductions.push(r.connection.deduction);
+    if (this.isOpen) this.render();
+    this.onLink?.(r);
+    return true;
   }
 
   toggle(): void {
@@ -144,10 +191,15 @@ export class Journal {
       this.note.textContent = t('journal.empty');
       return;
     }
+    // Las pistas que todavía pueden conectarse con otra laten suave: orientan sin resolver.
+    const hot = new Set(this.graph.pending().flatMap((c) => [c.a, c.b]));
+    this.board.addEventListener('mousedown', (e) => {
+      if (e.target === this.board && this.drag?.sticky) this.cancelDrag();
+    });
     for (const id of this.graph.clues) {
       const [x, y, r] = LAYOUT[id] ?? [40, 40, 0];
       const p = document.createElement('div');
-      p.className = 'jr-polaroid';
+      p.className = `jr-polaroid${hot.has(id) ? ' hot' : ''}`;
       p.dataset.id = id;
       p.style.left = `${x}%`;
       p.style.top = `${y}%`;
@@ -163,12 +215,18 @@ export class Journal {
 
   private renderPeople(root: HTMLDivElement): void {
     root.innerHTML = `<div class="jr-people">${GIRLS.map((g) => {
-      const known = this.knownPeople.has(g.id);
-      const img = portraitCanvas({ seed: g.seed, hair: g.hair, size: 96 }).toDataURL();
-      return `<div class="jr-person ${known ? '' : 'unknown'}"><img src="${img}"/><b>${g.name} · ${g.code}</b><span>${
-        known ? t(`people.${g.id}`) : t('people.unknown')
+      const notes = this.people.get(g.id);
+      const known = !!notes;
+      const fallback = portraitCanvas({ seed: g.seed, hair: g.hair, size: 96 }).toDataURL();
+      return `<div class="jr-person ${known ? '' : 'unknown'}"><img src="/assets/characters/girl_${g.id}.png" data-fallback="${fallback}"/><b>${g.name} · ${g.code}</b><span>${
+        known ? notes.map((n) => t(n)).join('<br/>') : t('people.unknown')
       }</span></div>`;
     }).join('')}</div>`;
+    root.querySelectorAll<HTMLImageElement>('img[data-fallback]').forEach((image) => {
+      image.addEventListener('error', () => {
+        image.src = image.dataset.fallback!;
+      }, { once: true });
+    });
   }
 
   private renderGoal(root: HTMLDivElement): void {
@@ -180,9 +238,17 @@ export class Journal {
   private center(id: string): [number, number] | null {
     const p = this.board.querySelector<HTMLDivElement>(`[data-id="${id}"]`);
     if (!p) return null;
+    // Coordenadas de layout (no de pantalla): el libro está en perspectiva y entra animado.
+    return [p.offsetLeft + p.offsetWidth / 2, p.offsetTop + p.offsetHeight * 0.1];
+  }
+
+  /** Punto de pantalla → coordenadas locales del tablero (que está inclinado en perspectiva). */
+  private toBoard(e: MouseEvent): [number, number] {
     const br = this.board.getBoundingClientRect();
-    const r = p.getBoundingClientRect();
-    return [r.left + r.width / 2 - br.left, r.top + 18 - br.top];
+    return [
+      ((e.clientX - br.left) / br.width) * this.board.clientWidth,
+      ((e.clientY - br.top) / br.height) * this.board.clientHeight,
+    ];
   }
 
   private drawStrings(): void {
@@ -212,6 +278,15 @@ export class Journal {
 
   private startDrag(id: string, e: MouseEvent): void {
     e.preventDefault();
+    // Segundo clic del modo "clic + clic": conectar con la pista elegida antes.
+    if (this.drag?.sticky) {
+      const { from, line } = this.drag;
+      this.drag = null;
+      this.board.querySelector('.sel')?.classList.remove('sel');
+      if (id === from) line.remove();
+      else this.tryLink(from, id, line);
+      return;
+    }
     const a = this.center(id);
     if (!a) return;
     const line = this.line(a, a);
@@ -223,22 +298,34 @@ export class Journal {
 
   private onMove(e: MouseEvent): void {
     if (!this.drag) return;
-    const br = this.board.getBoundingClientRect();
-    this.drag.line.setAttribute('x2', String(e.clientX - br.left));
-    this.drag.line.setAttribute('y2', String(e.clientY - br.top));
+    const [x, y] = this.toBoard(e);
+    this.drag.line.setAttribute('x2', String(x));
+    this.drag.line.setAttribute('y2', String(y));
   }
 
   private onUp(e: MouseEvent): void {
     if (!this.drag) return;
     const target = (e.target as HTMLElement).closest?.('.jr-polaroid') as HTMLDivElement | null;
+    if (this.drag.sticky) return;
     const from = this.drag.from;
     const line = this.drag.line;
+    if (target?.dataset.id === from) {
+      // Soltó sobre la misma pista: queda elegida y el hilo espera el clic en la otra.
+      this.drag.sticky = true;
+      target.classList.add('sel');
+      this.note.textContent = t('journal.pick');
+      return;
+    }
     this.drag = null;
-    if (!target || target.dataset.id === from) {
+    if (!target) {
       line.remove();
       return;
     }
-    const r = this.graph.link(from, target.dataset.id!);
+    this.tryLink(from, target.dataset.id!, line);
+  }
+
+  private tryLink(from: string, to: string, line: SVGLineElement): void {
+    const r = this.graph.link(from, to);
     if (r.ok) {
       line.remove();
       if (r.isNew) {
@@ -250,6 +337,8 @@ export class Journal {
       void this.note.offsetWidth;
       this.note.classList.add('flash');
       this.drawStrings();
+      const still = new Set(this.graph.pending().flatMap((c) => [c.a, c.b]));
+      this.board.querySelectorAll<HTMLDivElement>('.jr-polaroid').forEach((p) => p.classList.toggle('hot', still.has(p.dataset.id!)));
     } else {
       line.classList.add('snap');
       this.audio.play('snap');
@@ -260,6 +349,7 @@ export class Journal {
   }
 
   private cancelDrag(): void {
+    this.board?.querySelector('.sel')?.classList.remove('sel');
     this.drag?.line.remove();
     this.drag = null;
   }
@@ -281,7 +371,7 @@ export class Journal {
         ctx.fillRect(0, 0, 96, 96);
         ctx.fillStyle = '#d9e4ea';
         ctx.fillRect(10, 22, 76, 50);
-        ctx.drawImage(portraitCanvas({ seed: 2203, hair: 1, size: 64 }), 14, 28, 28, 32);
+        ctx.drawImage(this.photos.get('c2') ?? portraitCanvas({ seed: 2203, hair: 1, size: 64 }), 14, 28, 28, 32);
         ctx.fillStyle = '#333';
         for (let i = 0; i < 4; i++) ctx.fillRect(48, 32 + i * 8, 30 - i * 4, 3);
         ctx.fillStyle = 'rgba(70,50,20,0.5)';
@@ -310,9 +400,15 @@ export class Journal {
         }
         ctx.stroke();
         break;
-      case 'c6':
-        ctx.drawImage(portraitCanvas({ seed: 4011, hair: 0, size: 96 }), 0, 0);
+      case 'c6': {
+        const photo = this.photos.get('c6');
+        if (photo) {
+          // recorte cuadrado centrado en Lucía
+          const side = photo.naturalHeight;
+          ctx.drawImage(photo, (photo.naturalWidth - side) * 0.62, 0, side, side, 0, 0, 96, 96);
+        } else ctx.drawImage(portraitCanvas({ seed: 4011, hair: 0, size: 96 }), 0, 0);
         break;
+      }
       case 'c3':
       case 'c7':
         ctx.fillStyle = '#9fdcaa';

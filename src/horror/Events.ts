@@ -12,6 +12,8 @@ export class HorrorEvents implements System {
   private whispers = 0;
   private apparition: GirlModel;
   private appT = -1;
+  private appLife = 3.2;
+  private appMin = 6;
   private tmp = new THREE.Vector3();
   private seqs: Array<{ t: number; fn: () => void }> = [];
 
@@ -150,8 +152,18 @@ export class HorrorEvents implements System {
     ]);
   }
 
+  /** Aparición con guion: una figura quieta en (x, z) que se va al alumbrarla, al acercarse o sola. */
+  appear(x: number, z: number, life = 3.2, minDist = 1.8): void {
+    this.apparition.root.position.set(x, 0, z);
+    this.apparition.lookAt(this.s.player.position);
+    this.apparition.root.visible = true;
+    this.appT = 0;
+    this.appLife = life;
+    this.appMin = minDist;
+  }
+
   /** Figura al fondo del pasillo que desaparece al alumbrarla o acercarse. */
-  private figureAtEnd(): boolean {
+  figureAtEnd(): boolean {
     const s = this.s;
     if (this.appT >= 0) return false;
     const p = s.player.position;
@@ -164,6 +176,8 @@ export class HorrorEvents implements System {
     this.apparition.lookAt(p);
     this.apparition.root.visible = true;
     this.appT = 0;
+    this.appLife = 3.2;
+    this.appMin = 6;
     return true;
   }
 
@@ -186,7 +200,7 @@ export class HorrorEvents implements System {
       const dz = (a.z - s.player.position.z) / dist;
       const facing = f.x * dx + f.z * dz;
       const lit = s.phone.out && s.phone.flashOn && facing > 0.96;
-      if (lit || dist < 6 || this.appT > 3.2) {
+      if ((lit && this.appT > 0.5) || dist < this.appMin || this.appT > this.appLife) {
         this.apparition.root.visible = false;
         this.appT = -1;
         s.audio.play('switchOff', { pos: a.clone().setY(2.5) });

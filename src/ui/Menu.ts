@@ -6,9 +6,10 @@ import * as THREE from 'three';
 import type { Game, System } from '../core/Game';
 import { RENDER } from '../config';
 import { ps2Lambert, applyPS2 } from '../render/ps2Material';
-import { chainFence, perimeterWall } from '../textures/world';
+import { perimeterWall } from '../textures/world';
 import { toTexture } from '../textures/canvas';
-import { drawPoster, POSTER_H, POSTER_W } from '../textures/poster';
+import { drawPoster, preloadPosterPortraits, POSTER_H, POSTER_W } from '../textures/poster';
+import { optionalTexture } from '../textures/asset';
 import { Lightning, Rain } from '../world/props';
 import { bus } from '../core/EventBus';
 import type { AudioEngine } from '../audio/AudioEngine';
@@ -27,6 +28,8 @@ export class MenuScene implements System {
   private lookIndex: number;
   readonly visits: number;
   private lightning: Lightning;
+  private loop: HTMLVideoElement;
+  private stopped = false;
 
   constructor(
     game: Game,
@@ -42,16 +45,50 @@ export class MenuScene implements System {
     this.scene.background = new THREE.Color(0x07090b);
     this.scene.fog = new THREE.FogExp2(0x07090b, 0.16);
 
-    // Muro de fondo y reja
+    // Fondo: muro procedural hasta que llega la calle bajo la lluvia (foto y luego video de Higgsfield).
     const wallTex = perimeterWall();
     wallTex.repeat.set(4, 2);
-    const wall = new THREE.Mesh(new THREE.PlaneGeometry(14, 6), ps2Lambert({ map: wallTex }));
+    const wall = new THREE.Mesh<THREE.PlaneGeometry, THREE.Material>(new THREE.PlaneGeometry(1, 1), ps2Lambert({ map: wallTex }));
+    wall.scale.set(14, 6, 1);
     wall.position.set(0, 2, -2.4);
-    const fenceTex = chainFence();
-    fenceTex.repeat.set(14, 7);
+    // La foto/video va sin iluminar ni niebla (si no, la calle queda negra) y encuadrada a 16:9.
+    const backdrop = applyPS2(new THREE.MeshBasicMaterial({ color: 0xaab4bc, fog: false }));
+    const useBackdrop = (map: THREE.Texture) => {
+      if (this.stopped) return;
+      backdrop.map = map;
+      backdrop.needsUpdate = true;
+      wall.material = backdrop;
+      const width = 3.9 * Math.max(16 / 9, innerWidth / innerHeight);
+      wall.scale.set(width, (width * 9) / 16, 1);
+      wall.position.set(0.08, 1.5, -2.4);
+    };
+    const plate = optionalTexture(perimeterWall(), 'ui/menu_plate.png', () => {
+      plate.repeat.set(1, 1);
+      if (!backdrop.map) useBackdrop(plate);
+    });
+    const loop = document.createElement('video');
+    loop.src = '/assets/video/menu_loop.mp4';
+    loop.muted = true;
+    loop.loop = true;
+    loop.playsInline = true;
+    loop.preload = 'auto';
+    this.loop = loop;
+    loop.addEventListener('loadeddata', () => {
+      if (this.stopped) return;
+      const texture = new THREE.VideoTexture(loop);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.magFilter = THREE.NearestFilter;
+      texture.minFilter = THREE.NearestFilter;
+      void loop.play().then(() => useBackdrop(texture)).catch(() => { /* queda la foto fija */ });
+    }, { once: true });
+    // Malla fina (alambre de ~4 mm): deja ver la calle de fondo en vez de taparla.
+    const fenceTex = fineFence();
+    fenceTex.repeat.set(18, 9);
     const fence = new THREE.Mesh(
       new THREE.PlaneGeometry(10, 5),
-      applyPS2(new THREE.MeshLambertMaterial({ map: fenceTex, alphaTest: 0.5, side: THREE.DoubleSide, color: 0x9aa0a0 })),
+      applyPS2(
+        new THREE.MeshLambertMaterial({ map: fenceTex, transparent: true, alphaTest: 0.12, side: THREE.DoubleSide, color: 0x9aa4a4 }),
+      ),
     );
     fence.position.set(0, 1.8, -0.04);
     const post = new THREE.Mesh(new THREE.BoxGeometry(0.08, 5, 0.08), ps2Lambert({ color: 0x3a4448 }));
@@ -66,6 +103,7 @@ export class MenuScene implements System {
     this.posterTex = toTexture(pc, false);
     this.posterTex.minFilter = THREE.LinearFilter;
     this.redraw();
+    preloadPosterPortraits(() => this.redraw());
     this.poster = new THREE.Mesh(new THREE.PlaneGeometry(0.72, 1.02, 8, 8), ps2Lambert({ map: this.posterTex }));
     // curvatura leve (papel mojado)
     const pos = this.poster.geometry.attributes.position;
@@ -117,6 +155,11 @@ export class MenuScene implements System {
     bus.on('lang:changed', () => this.redraw());
   }
 
+  stop(): void {
+    this.stopped = true;
+    this.loop.pause();
+  }
+
   private redraw(lookX = 0, lookY = 0, look = false): void {
     drawPoster(this.posterCtx, {
       visits: this.visits,
@@ -157,6 +200,28 @@ export class MenuScene implements System {
     this.audio.heart = 0;
     this.audio.breath = 0;
   }
+}
+
+/** Malla de alambre en alta resolución y con filtrado suave (la del mundo es deliberadamente tosca). */
+function fineFence(): THREE.CanvasTexture {
+  const c = document.createElement('canvas');
+  c.width = c.height = 256;
+  const ctx = c.getContext('2d')!;
+  ctx.strokeStyle = '#aab2b0';
+  ctx.lineWidth = 2.4;
+  for (let i = -256; i < 512; i += 32) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(i + 256, 256);
+    ctx.moveTo(i + 256, 0);
+    ctx.lineTo(i, 256);
+    ctx.stroke();
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.anisotropy = 4;
+  return tex;
 }
 
 function readVisits(): number {

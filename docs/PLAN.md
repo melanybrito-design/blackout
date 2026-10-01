@@ -1,4 +1,4 @@
-# PLAN DE ACCIÓN — ÚLTIMA VEZ VISTAS (demo de 15 min, Three.js)
+# PLAN DE ACCIÓN — BLACKOUT (demo de 15 min, Three.js)
 
 > Orden pensado para tener **algo jugable y que asuste lo antes posible** y después agregar capas.
 > Cada fase termina con la "Definición de terminado" de `AGENTS.md §18`.
@@ -16,9 +16,54 @@
 | 6. Grabadora + EVP | ✅ |
 | 7. Director de Miedo + eventos menores | ✅ |
 | 8. Entidades + screamers S1–S5 | ✅ |
-| 9. Nivel final (arte procedural + gore) | ✅ (pendiente: assets Higgsfield) |
+| 9. Nivel final (arte procedural + gore) | ✅ (assets Higgsfield integrados con respaldo procedural) |
 | 10. Menú afiche + meta-horror | ✅ |
-| 11. Pulido, ritmo y playtest | 🟡 flujo completo verificado por simulación; falta playtest humano cronometrado |
+| 11. Pulido, ritmo y playtest | 🟡 flujo completo verificado por simulación (30/09: partida nueva → final, 5/5 screamers, todas las puertas); falta playtest humano cronometrado |
+
+### Revisión del 30/09/2026 (integración de assets de Higgsfield)
+- **Jugado de punta a punta** con entrada simulada (`?debug=1&nopause&mute&cp=new`): portón, 2°B, casillero 17, baño, puerta atascada y candado 6-3-1 abren; S1–S5 se disparan una vez cada uno.
+- **Bugs corregidos:** rostro del screamer pegado tras ser atrapado en la persecución · S3 (y con él el resto de la demo) se perdía si S2 saltaba dentro del baño · Lucía ya estaba de frente y nunca "se daba vuelta" · el video del final se borraba al dibujar el falso crash · videos de susto aplastados (16:9 en plano cuadrado) y el de Lucía arrancaba en la cara tranquila · hilos rojos del diario mal ubicados mientras el libro entra animado · la foto de Lucía quedaba dentro de la pared del casillero · Renata y Ana Paula nunca se revelaban en "Personas".
+- **Assets integrados:** recortes derivados con `scripts/derive_higgsfield_assets.py` (páginas de la libreta, corcho, marco polaroid con ventana transparente, tira de cinta, puertas, casillero, parquet, grietas del espejo, foto impresa de Lucía); menú con la calle bajo la lluvia detrás de una malla fina; fondo de pantalla del celular; pizarra; caras de los modelos 3D.
+- **Pendiente:** playtest humano con audífonos (ritmo y volúmenes), draw calls del patio (~330, sobre el objetivo de 150 aunque a 100+ FPS), prueba en Safari y Firefox.
+
+### Revisión del 01/10/2026 (jugabilidad e historia, pedido de quien juega)
+Al probarlo, el juego no se entendía: solo se podía caminar y nada respondía. Decisiones nuevas (ganan sobre AGENTS.md §2 y §19 donde choquen):
+- **Prólogo narrado** (`ui/Intro.ts`) antes de la partida nueva: qué pasó con las seis, quién es Lucía, quién eres tú, el SMS, y una tarjeta de controles. Se puede saltar.
+- **Puntero siempre visible** con la acción disponible junto a él («[E] Abrir / Leer / Examinar / Recoger»).
+- **Manos siempre visibles** (`player/Hands.ts`); la derecha se estira al interactuar.
+- **Sin instrucciones paso a paso.** La guía es interna: pensamientos del personaje al examinar y al entrar a cada zona, SMS de Lucía repetidos en pantalla al leerlos, puertas que se sacuden y explican por qué no abren. Cada tecla se recuerda **una sola vez** cuando su herramienta entra en juego; si el jugador pasa ~50 s sin avanzar, el personaje piensa en voz alta (`stuck.*`).
+- **Colegio examinable:** ~25 objetos con texto, cuatro documentos legibles (`ui/Document.ts`: comunicado, cuaderno de Isabel, guion de «La Última Función», lista de asistencia), cubículos del baño que se abren.
+- **Fichas de las seis chicas:** cada pertenencia encontrada suma una línea a su ficha en «Personas» (se guarda en `uvv.people`).
+- **Diario:** las pistas conectables laten; se unen con clic + clic (además de arrastrar).
+- **Celular sin clic derecho obligatorio:** [Q] fija la cámara, [Espacio] dispara, [←][→] pasan fotos; la galería abre en la foto más nueva.
+- El objetivo aparece al cambiar y se desvanece; queda en el diario.
+
+### Revisión del 01/10/2026, segunda pasada (el juego no avanzaba para quien lo jugaba)
+- **[E] siempre hace avanzar la historia.** La cámara y el diario siguen funcionando a mano, pero ya no son obligatorios: al insistir en la 2°B el personaje fotografía la pizarra por la ventanita y luego ata las pistas; el casillero 17 se abre si ya se tienen el cassette y la psicofonía; [E] en el espejo lo mira con la cámara; la grabadora, una vez en la mano, reproduce → graba la sala → rebobina sola; el candado se autocompleta con la foto del espejo.
+- **Sin esperas muertas:** S2, S3 y S4 se fuerzan cuando la historia los necesita (antes había hasta 90 s sin nada). `DIRECTOR`: cooldown 45 s, 2 falsas alarmas, respiro 10–16 s. Esto reemplaza la regla de 90 s de AGENTS.md §10.
+- **Tres salas nuevas para explorar** en el primer piso, abiertas con [E]: sala de profesores, laboratorio y portería, con documentos (nómina, libro de actas, cuaderno de Ana Paula, bitácora del portero) y objetos examinables.
+- **Manos:** solo se ven al bajar la mirada (y al estirarse para usar algo). **Tipografía:** una sola en toda la interfaz (Special Elite, la del inicio); Caveat queda solo en la tiza de la pizarra.
+- Verificado con un recorrido «solo WASD + E» de partida nueva a final: 5/5 sustos, ~3,5 min de simulación sin explorar.
+
+### Revisión del 01/10/2026, tercera pasada (menos trabas, más miedo)
+- **`decal_blood_drag.png` no se usa:** Higgsfield devolvió la foto de una mano y quedaba estirada en el piso del pasillo. Las marcas de arrastre vuelven a ser las de código. Conviene regenerar ese asset.
+- **La 2°B ya no está trabada** (se abre con [E]). La pizarra da su pista al examinarla y las deducciones se hacen solas al conseguir las pistas; el diario queda como registro.
+- **S1 garantizado y temprano:** al recoger la credencial (o al entrar a la 2°B) aparece «1 foto nueva» y a los ~9 s el rostro llena el celular, lo mire o no.
+- **Sustos de exploración** (una vez cada uno): figura al fondo del pasillo al entrar + tubo que revienta; La Huella (Daniela) visible solo por la cámara, que salta hacia ti; portazo de la 2°B durante el cassette; apagón y figura en el sillón (profesores); frasco que estalla y figura en la puerta (laboratorio); portazo, apagón, risas y figura en el rincón (portería); golpe en el cubículo del baño.
+- **Falsas alarmas más seguidas:** menores cada 12–26 s, medias cada 35–70 s.
+- **Persecución:** cada captura la vuelve más lenta (tras dos, caminar alcanza). La puerta atascada se puede forzar siempre.
+
+### Revisión del 01/10/2026, cuarta pasada (los niveles son los pisos)
+Reemplaza el mapa de un solo piso de AGENTS.md / GUION_DEMO.md:
+| Nivel | Piso | Qué hay | Cómo se pasa |
+|---|---|---|---|
+| 1 · Las huellas | Primer piso | hall, casilleros, 2°B, sala de profesores | grabadora → psicofonía → casillero 17 → **llave de la reja de la escalera** (S1, S2) |
+| 2 · Los espejos | Segundo piso | laboratorio, baño de mujeres | foto del espejo → S3 → **cae la cadena de la reja al piso 3** |
+| 3 · La última función | Tercer piso | cuarto de servicio, pasillo largo, gimnasio | apagón y llamada (S4) → persecución → candado 6-3-1 → S5 |
+- **Implementación:** el pasillo principal se corta con dos cajas de escalera (`FLOOR_WALLS` en `world/School.ts`); cada tramo es un piso. [E] en la escalera funde a negro y te deja en el otro piso con el cartel de nivel (`Script.climb/arrive`, `Hud.level`). Se puede volver a bajar, salvo durante la persecución.
+- La llave del casillero 17 ahora abre la reja de la escalera (el baño ya no tiene llave). S4 se dispara al avanzar por el pasillo largo del tercer piso; «La que Imita» sale de la escalera.
+- La interacción ignora lo que queda a la espalda del jugador.
+- Verificado: partida nueva → final pasando los tres niveles, 5/5 sustos, rejas cerradas antes de tiempo, subir y bajar.
 
 ---
 

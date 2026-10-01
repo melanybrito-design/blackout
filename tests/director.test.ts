@@ -30,7 +30,8 @@ describe('FearDirector', () => {
     const ev = run(d, 300);
     const minors = ev.filter((e) => e.kind === 'minor' || e.kind === 'medium');
     expect(minors.length).toBeGreaterThanOrEqual(5);
-    expect(minors.length).toBeLessThanOrEqual(20);
+    // Tope según la configuración: nunca más seguidas que los mínimos de cada tipo.
+    expect(minors.length).toBeLessThanOrEqual(Math.ceil(300 / DIRECTOR.minorMin) + Math.ceil(300 / DIRECTOR.mediumMin));
   });
 
   it('un mayor va precedido de silencio y de al menos 3 falsas alarmas', () => {

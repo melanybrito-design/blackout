@@ -69,6 +69,13 @@ export class FearDirector {
     this.armed.push({ id, waited: 0, force });
   }
 
+  /** La historia ya no puede esperar a este susto: se dispara en cuanto termine el respiro actual. */
+  force(id: string): void {
+    const a = this.armed.find((x) => x.id === id);
+    if (a) a.force = true;
+    else this.arm(id, true);
+  }
+
   isArmed(id: string): boolean {
     return this.armed.some((a) => a.id === id) || this.silence?.id === id;
   }

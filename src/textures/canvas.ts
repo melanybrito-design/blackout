@@ -26,11 +26,14 @@ export function liveTexture(w: number, h: number, draw: (ctx: CanvasRenderingCon
   const [c, ctx] = canvas(w, h);
   draw(ctx, w, h);
   const tex = toTexture(c, false);
-  bus.on('lang:changed', () => {
+  const redraw = () => {
     ctx.clearRect(0, 0, w, h);
     draw(ctx, w, h);
     tex.needsUpdate = true;
-  });
+  };
+  bus.on('lang:changed', redraw);
+  // Para texturas que además esperan una imagen opcional (p. ej. la pizarra).
+  tex.userData.redraw = redraw;
   return tex;
 }
 

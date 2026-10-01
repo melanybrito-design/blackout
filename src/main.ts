@@ -13,10 +13,12 @@ import { Session } from './session/Session';
 import { MenuScene } from './ui/Menu';
 import { showMainMenu, showOptions, showPause, showWarning } from './ui/Screens';
 import { playEnding } from './ui/Ending';
+import { playIntro } from './ui/Intro';
 import { loadSettings, type Settings } from './core/Settings';
 import { setSensitivityScale } from './player/PlayerController';
 import { StoryState, type Checkpoint, type Flag } from './narrative/StoryState';
 import { getLang, setLang, t } from './i18n';
+import { preloadPosterPortraits } from './textures/poster';
 
 async function loadFonts(): Promise<void> {
   const fams = ['16px "Special Elite"', '16px VT323', '16px Anton', '16px "Archivo Black"', '16px Caveat', '16px "Permanent Marker"'];
@@ -46,6 +48,8 @@ function debugSave(cp: Checkpoint): NonNullable<ReturnType<typeof StoryState.loa
 
 async function main(): Promise<void> {
   await loadFonts();
+  // Los afiches del mundo se dibujan una vez: los retratos tienen que estar antes de empezar.
+  preloadPosterPortraits();
   const app = document.getElementById('app')!;
   const game = new Game(app);
   const playCamera = game.camera;
@@ -57,6 +61,7 @@ async function main(): Promise<void> {
   let session: Session | null = null;
   let closeMenu: (() => void) | null = null;
   let closePause: (() => void) | null = null;
+  let activeMenu: MenuScene | null = null;
   let ended = false;
 
   const applySettings = (s: Settings) => {
@@ -78,12 +83,18 @@ async function main(): Promise<void> {
 
   const openMenu = () => {
     const menu = new MenuScene(game, audio, StoryState.isFinished());
+    activeMenu = menu;
     game.setView(menu.scene, menu.camera);
     audio.camera = menu.camera;
     game.setActive('menu');
     const save = StoryState.load();
     closeMenu = showMainMenu({
-      onNew: () => start(null),
+      // Partida nueva: primero el prólogo (historia + controles); el último clic entra al juego.
+      onNew: () => {
+        closeMenu?.();
+        closeMenu = null;
+        playIntro(audio, () => start(null));
+      },
       onContinue: save ? () => start(save) : null,
       settings,
       applySettings,
@@ -96,9 +107,18 @@ async function main(): Promise<void> {
   };
 
   const start = (save: ReturnType<typeof StoryState.load>) => {
+    activeMenu?.stop();
+    activeMenu = null;
     closeMenu?.();
     closeMenu = null;
-    if (!save) StoryState.clear();
+    if (!save) {
+      StoryState.clear();
+      try {
+        localStorage.removeItem('uvv.people');
+      } catch {
+        /* sin almacenamiento */
+      }
+    }
     game.camera = playCamera;
     session = new Session(game, audio, fx);
     session.hud.subtitles = settings.subtitles;

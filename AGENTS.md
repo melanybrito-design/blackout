@@ -1,4 +1,4 @@
-# AGENTS.md — ÚLTIMA VEZ VISTAS / LAST SEEN
+# AGENTS.md — BLACKOUT (antes «Última vez vistas / Last Seen»)
 
 > Documento maestro para Claude Code. Léelo completo antes de escribir código.
 > Si algo de este documento contradice una petición del usuario en el chat, gana el usuario.
@@ -207,7 +207,7 @@ Modelos de las entidades: humanoide low-poly (primitivas o base CC0 de Quaterniu
 - **Español (neutro latinoamericano)** e **Inglés**. Se elige en el primer arranque y en el menú; persiste en `localStorage`.
 - Archivos `src/i18n/es.json` y `src/i18n/en.json` con **las mismas claves** (test de Vitest que lo verifica).
 - Traduce: UI, SMS, EVP (subtítulo y voz), notas, pistas, deducciones, texturas con texto (afiche, pizarra, espejo: se regeneran al cambiar el idioma).
-- Título del juego: **ÚLTIMA VEZ VISTAS** / **LAST SEEN**.
+- Título del juego: **BLACKOUT** (igual en ES y EN; renombrado el 01/10/2026).
 
 ## 14. Menú y meta-horror
 

@@ -3,6 +3,7 @@ import type * as THREE from 'three';
 import { canvas, toTexture, liveTexture, grime, noise, bloodDrip, shakyText } from './canvas';
 import { rng } from './rng';
 import { t } from '../i18n';
+import { optionalImage } from './asset';
 
 /** Baldosas blancas/celestes del baño. */
 export function bathTiles(): THREE.CanvasTexture {
@@ -144,23 +145,48 @@ export function chainFence(): THREE.CanvasTexture {
 
 /** Pizarra con tiza: ENSAYO 21:00 — NO FALTAR (i18n). */
 export function blackboard(): THREE.CanvasTexture {
-  return liveTexture(256, 128, (ctx, w, h) => {
+  // La pizarra vacía es una foto opcional; el texto siempre se escribe en código (ES/EN).
+  let photo: HTMLImageElement | null = null;
+  const K = 2;
+  const tex = liveTexture(256 * K, 128 * K, (ctx, w, h) => {
     const r = rng(811);
-    ctx.fillStyle = '#1f2c25';
-    ctx.fillRect(0, 0, w, h);
-    for (let i = 0; i < 30; i++) {
-      ctx.fillStyle = `rgba(200,210,200,${0.02 + r() * 0.05})`;
-      ctx.fillRect(r() * w, r() * h, 20 + r() * 60, 4 + r() * 10);
+    if (photo) {
+      ctx.drawImage(photo, 0, 0, w, h);
+      ctx.fillStyle = 'rgba(8,14,12,0.35)';
+      ctx.fillRect(0, 0, w, h);
+    } else {
+      ctx.fillStyle = '#1f2c25';
+      ctx.fillRect(0, 0, w, h);
+      for (let i = 0; i < 30; i++) {
+        ctx.fillStyle = `rgba(200,210,200,${0.02 + r() * 0.05})`;
+        ctx.fillRect(r() * w, r() * h, (20 + r() * 60) * K, (4 + r() * 10) * K);
+      }
     }
+    // Que ninguna línea se salga de la pizarra (el inglés y el español miden distinto).
+    const font = 'Caveat, cursive';
+    const line = (key: string, x: number, y: number, size: number) => {
+      const text = t(key);
+      ctx.font = `${size * K}px ${font}`;
+      const room = w - (x + 14) * K;
+      const k = Math.min(1, room / (ctx.measureText(text).width * 1.04));
+      shakyText(ctx, r, text, x * K, y * K, size * K * k, font);
+    };
     ctx.fillStyle = 'rgba(235,235,225,0.9)';
-    shakyText(ctx, r, t('board.line1'), 14, 42, 26, 'Caveat, cursive');
-    shakyText(ctx, r, t('board.line2'), 18, 78, 20, 'Caveat, cursive');
+    line('board.line1', 18, 44, 26);
+    line('board.line2', 22, 78, 20);
     ctx.fillStyle = 'rgba(235,235,225,0.6)';
-    shakyText(ctx, r, t('board.line3'), 18, 108, 15, 'Caveat, cursive');
-    ctx.strokeStyle = '#4b3a22';
-    ctx.lineWidth = 6;
-    ctx.strokeRect(0, 0, w, h);
+    line('board.line3', 22, 106, 15);
+    if (!photo) {
+      ctx.strokeStyle = '#4b3a22';
+      ctx.lineWidth = 6 * K;
+      ctx.strokeRect(0, 0, w, h);
+    }
   });
+  optionalImage('textures/blackboard.png', (image) => {
+    photo = image;
+    (tex.userData.redraw as () => void)();
+  });
+  return tex;
 }
 
 /** Ventana de noche con lluvia (emisiva tenue). */
@@ -208,9 +234,12 @@ export function doorPlate(key: string): THREE.CanvasTexture {
     ctx.fillStyle = '#d5cdb4';
     ctx.fillRect(0, 0, w, h);
     ctx.fillStyle = '#1b1b1b';
-    ctx.font = 'bold 13px sans-serif';
+    // Achicar la letra hasta que el nombre entre en la placa.
+    let size = 13;
+    do ctx.font = `bold ${size}px sans-serif`;
+    while (ctx.measureText(t(key)).width > w - 6 && --size > 6);
     ctx.textAlign = 'center';
-    ctx.fillText(t(key), w / 2, 17);
+    ctx.fillText(t(key), w / 2, 12 + size * 0.38);
   });
 }
 

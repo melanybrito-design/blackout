@@ -1,0 +1,239 @@
+{
+  "project": "ÚLTIMA VEZ VISTAS",
+  "credits_before": 343,
+  "credits_after": 254.15,
+  "credits_spent": 88.85,
+  "higgsfield_project_id": "2892a2ae-cdb4-4fe5-bc9d-f44e85a36d47",
+  "images": [
+    {
+      "path": "public/assets/characters/girl_lucia.png",
+      "job_id": "925f27ec-9fd1-4958-bbde-1cce560c4b76",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_204438_925f27ec-9fd1-4958-bbde-1cce560c4b76.png",
+      "model": "nano_banana"
+    },
+    {
+      "path": "public/assets/characters/girl_daniela.png",
+      "job_id": "51eafac6-fbff-4397-b1e9-38cf6e1d7d9f",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_210619_51eafac6-fbff-4397-b1e9-38cf6e1d7d9f.png",
+      "model": "nano_banana"
+    },
+    {
+      "path": "public/assets/characters/girl_renata.png",
+      "job_id": "7faad89f-3b0d-42ac-bf4f-b91ad0ccd8af",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_210658_7faad89f-3b0d-42ac-bf4f-b91ad0ccd8af.png",
+      "model": "nano_banana"
+    },
+    {
+      "path": "public/assets/characters/girl_anapaula.png",
+      "job_id": "04dc1a27-29e2-49ce-8a5d-6ce5d7d88bb1",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_210716_04dc1a27-29e2-49ce-8a5d-6ce5d7d88bb1.png",
+      "model": "nano_banana"
+    },
+    {
+      "path": "public/assets/characters/girl_fernanda.png",
+      "job_id": "7e4d71ea-d8c2-4778-8162-946bc8dbd91f",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_210753_7e4d71ea-d8c2-4778-8162-946bc8dbd91f.png",
+      "model": "nano_banana"
+    },
+    {
+      "path": "public/assets/characters/girl_isabel.png",
+      "job_id": "488d90f8-0bdb-477e-b52e-9bf3d2b99c86",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_210830_488d90f8-0bdb-477e-b52e-9bf3d2b99c86.png",
+      "model": "nano_banana"
+    },
+    {
+      "path": "public/assets/characters/scream_daniela.png",
+      "job_id": "c04c78b0-5136-44c3-829b-2cad8dd5c804",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_211154_c04c78b0-5136-44c3-829b-2cad8dd5c804.png",
+      "model": "nano_banana"
+    },
+    {
+      "path": "public/assets/characters/scream_renata.png",
+      "job_id": "541e17d4-4386-4e47-a642-08f16bf83f4a",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_211204_541e17d4-4386-4e47-a642-08f16bf83f4a.png",
+      "model": "nano_banana"
+    },
+    {
+      "path": "public/assets/characters/scream_anapaula.png",
+      "job_id": "e603546b-fb48-4f4e-8d32-d2ec1d63bcb5",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_211215_e603546b-fb48-4f4e-8d32-d2ec1d63bcb5.png",
+      "model": "nano_banana"
+    },
+    {
+      "path": "public/assets/characters/scream_lucia.png",
+      "job_id": "e74e099e-344e-44d3-8cdc-3db462471cb9",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_213459_e74e099e-344e-44d3-8cdc-3db462471cb9.png",
+      "model": "nano_banana"
+    },
+    {
+      "path": "public/assets/characters/photo_lucia.png",
+      "job_id": "b78c5a93-1387-4448-8b97-86661a6a49e3",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_221815_b78c5a93-1387-4448-8b97-86661a6a49e3.png",
+      "model": "nano_banana"
+    },
+    {
+      "path": "public/assets/characters/wallpaper_sisters.png",
+      "job_id": "40615b8c-84df-4719-af85-9528a4a40ee1",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_221824_40615b8c-84df-4719-af85-9528a4a40ee1.png",
+      "model": "nano_banana"
+    },
+    {
+      "path": "public/assets/textures/floor_tiles.png",
+      "job_id": "b697f341-b8bf-4a6e-988b-46cff4aa3ef4",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_222932_b697f341-b8bf-4a6e-988b-46cff4aa3ef4.png",
+      "model": "z_image"
+    },
+    {
+      "path": "public/assets/textures/wall_school.png",
+      "job_id": "7878e12b-7e22-4629-9763-4f314d7fa420",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_222938_7878e12b-7e22-4629-9763-4f314d7fa420.png",
+      "model": "z_image"
+    },
+    {
+      "path": "public/assets/textures/ceiling_tiles.png",
+      "job_id": "ce77dc65-f8eb-4576-a4f1-d9ead35cbfee",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_222945_ce77dc65-f8eb-4576-a4f1-d9ead35cbfee.png",
+      "model": "z_image"
+    },
+    {
+      "path": "public/assets/textures/locker_front.png",
+      "job_id": "aaed2450-5e6d-4fd4-8f06-7ed37f7dc0ca",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_222953_aaed2450-5e6d-4fd4-8f06-7ed37f7dc0ca.png",
+      "model": "z_image"
+    },
+    {
+      "path": "public/assets/textures/door_classroom.png",
+      "job_id": "72952352-3e10-4d55-8e8c-ea282898a123",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_223000_72952352-3e10-4d55-8e8c-ea282898a123.png",
+      "model": "z_image"
+    },
+    {
+      "path": "public/assets/textures/bath_tiles.png",
+      "job_id": "8703a84a-68a5-4b07-b11a-2fe4d8239914",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_223007_8703a84a-68a5-4b07-b11a-2fe4d8239914.png",
+      "model": "z_image"
+    },
+    {
+      "path": "public/assets/textures/gym_floor.png",
+      "job_id": "e7568ba2-584e-4981-9349-96803dd696e6",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_223606_e7568ba2-584e-4981-9349-96803dd696e6.png",
+      "model": "z_image"
+    },
+    {
+      "path": "public/assets/textures/wet_concrete.png",
+      "job_id": "7e77fcaf-a9ea-494c-b641-b2c72aefb144",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_223613_7e77fcaf-a9ea-494c-b641-b2c72aefb144.png",
+      "model": "z_image"
+    },
+    {
+      "path": "public/assets/textures/perimeter_wall.png",
+      "job_id": "139f2c6d-e5f1-49d7-9911-12e15bad0c22",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_223624_139f2c6d-e5f1-49d7-9911-12e15bad0c22.png",
+      "model": "z_image"
+    },
+    {
+      "path": "public/assets/textures/blackboard.png",
+      "job_id": "6bbbd1de-fde4-4500-8c0d-32d865082ccf",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_223632_6bbbd1de-fde4-4500-8c0d-32d865082ccf.png",
+      "model": "z_image"
+    },
+    {
+      "path": "public/assets/textures/night_window.png",
+      "job_id": "c8111922-4454-4512-99ab-ca40db367d50",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_223640_c8111922-4454-4512-99ab-ca40db367d50.png",
+      "model": "z_image"
+    },
+    {
+      "path": "public/assets/textures/facade.png",
+      "job_id": "f8847a7c-0fac-4d74-b19e-46d31ab9396a",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_224151_f8847a7c-0fac-4d74-b19e-46d31ab9396a.png",
+      "model": "nano_banana_2"
+    },
+    {
+      "path": "public/assets/textures/decal_blood_splat.png",
+      "job_id": "58eaf6ea-371e-4dfe-b62f-8968d8c486ef",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_224247_58eaf6ea-371e-4dfe-b62f-8968d8c486ef.png",
+      "model": "z_image"
+    },
+    {
+      "path": "public/assets/textures/decal_blood_drag.png",
+      "job_id": "a40919fe-a42f-4ce2-97c5-22acc5fd4624",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_224255_a40919fe-a42f-4ce2-97c5-22acc5fd4624.png",
+      "model": "z_image"
+    },
+    {
+      "path": "public/assets/textures/decal_cracks.png",
+      "job_id": "7756115a-c958-4580-8c16-f63c63fabb59",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_224314_7756115a-c958-4580-8c16-f63c63fabb59.png",
+      "model": "z_image"
+    },
+    {
+      "path": "public/assets/textures/decal_footprints.png",
+      "job_id": "75bd4e90-2f07-4594-beab-6551a7e6d6d0",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20261001_005122_75bd4e90-2f07-4594-beab-6551a7e6d6d0.png",
+      "model": "z_image"
+    },
+    {
+      "path": "public/assets/ui/journal_paper.png",
+      "job_id": "72c8256f-f86a-4217-bca2-eafe830c0889",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_224335_72c8256f-f86a-4217-bca2-eafe830c0889.png",
+      "model": "z_image"
+    },
+    {
+      "path": "public/assets/ui/journal_cork.png",
+      "job_id": "6b76e06e-a31c-4997-8a8f-c3d1d7bc33dc",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_224344_6b76e06e-a31c-4997-8a8f-c3d1d7bc33dc.png",
+      "model": "z_image"
+    },
+    {
+      "path": "public/assets/ui/polaroid_frame.png",
+      "job_id": "8343a938-2be0-42a9-ab52-10ca9317e4d4",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_230300_8343a938-2be0-42a9-ab52-10ca9317e4d4.png",
+      "model": "z_image"
+    },
+    {
+      "path": "public/assets/ui/tape.png",
+      "job_id": "b06c46d7-59ff-45db-8f18-6bd922b2d41f",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20260930_230332_b06c46d7-59ff-45db-8f18-6bd922b2d41f.png",
+      "model": "z_image"
+    },
+    {
+      "path": "public/assets/ui/menu_plate.png",
+      "job_id": "e43df4fe-9ec8-48a0-997b-a8bf216ee0db",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20261001_005034_e43df4fe-9ec8-48a0-997b-a8bf216ee0db.png",
+      "model": "nano_banana_2"
+    }
+  ],
+  "videos": [
+  {
+    "path": "public/assets/video/menu_loop.mp4",
+    "job_id": "31f7275a-f31c-4249-a65b-3e9dbd759e1e",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20261001_013451_31f7275a-f31c-4249-a65b-3e9dbd759e1e.mp4",
+    "model": "wan2_6"
+  },
+  {
+    "path": "public/assets/video/intro.mp4",
+    "job_id": "51814001-ae63-47c6-9d0f-2302c4c82e4c",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20261001_013457_51814001-ae63-47c6-9d0f-2302c4c82e4c.mp4",
+    "model": "wan2_6"
+  },
+  {
+    "path": "public/assets/video/jumpscare_lucia.mp4",
+    "job_id": "0f05c021-4e4c-4c5b-b343-655716a231c4",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20261001_013522_0f05c021-4e4c-4c5b-b343-655716a231c4.mp4",
+    "model": "minimax_hailuo"
+  },
+  {
+    "path": "public/assets/video/jumpscare_daniela.mp4",
+    "job_id": "976e7f1e-6cdd-4649-957d-ae8f440a689d",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20261001_013529_976e7f1e-6cdd-4649-957d-ae8f440a689d.mp4",
+    "model": "minimax_hailuo"
+  },
+  {
+    "path": "public/assets/video/ending_gym.mp4",
+    "job_id": "8f3fdd47-29f7-4942-ae25-744e5fd5ca14",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JOIvvvzSwekWBaHXXD57ljAV5t/hf_20261001_013546_8f3fdd47-29f7-4942-ae25-744e5fd5ca14.mp4",
+    "model": "minimax_hailuo"
+  }
+]
+}

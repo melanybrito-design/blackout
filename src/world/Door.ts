@@ -24,6 +24,7 @@ export class Door implements System {
   private collider: AABB;
   private angle = 0;
   private target = 0;
+  private rattleT = 0;
   locked: boolean;
   isOpen = false;
   /** Clave i18n del mensaje al intentar abrirla cerrada. */
@@ -78,6 +79,12 @@ export class Door implements System {
     this.collider.enabled = true;
   }
 
+  /** Sacudida al intentar abrirla cerrada: se nota que respondió, aunque no ceda. */
+  rattle(): void {
+    if (this.isOpen) return;
+    this.rattleT = 0.32;
+  }
+
   /** Cierre de golpe (evento de susto). */
   slam(): void {
     this.close();
@@ -86,6 +93,11 @@ export class Door implements System {
   }
 
   update(dt: number): void {
+    if (this.rattleT > 0) {
+      this.rattleT -= dt;
+      const dir = Math.sign(this.opts.openAngle) || 1;
+      this.pivot.rotation.y = this.rattleT > 0 ? this.angle + dir * Math.abs(Math.sin(this.rattleT * 38)) * 0.035 : this.angle;
+    }
     if (this.angle === this.target) return;
     const speed = this.isOpen ? 2.2 : 3.5;
     const d = this.target - this.angle;

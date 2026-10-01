@@ -4,6 +4,8 @@ import * as THREE from 'three';
 import { applyPS2 } from '../render/ps2Material';
 import { toTexture } from '../textures/canvas';
 import { portraitCanvas, screamerCanvas } from '../textures/faces';
+import { optionalImage } from '../textures/asset';
+import { GIRLS } from '../narrative/girls';
 
 export interface GirlOpts {
   seed: number;
@@ -66,6 +68,12 @@ export class GirlModel {
     this.head.add(skull);
     this.faceNormal = toTexture(portraitCanvas({ seed: o.seed, hair: 1, size: 64 }), false);
     this.faceScary = toTexture(screamerCanvas(o.seed, 128), false);
+    // Si existen las fotos de Higgsfield de esta chica, la cara del modelo sale de ellas (solo el rostro).
+    const girl = GIRLS.find((g) => g.seed === o.seed);
+    if (girl) {
+      photoFace(this.faceNormal, `characters/girl_${girl.id}.png`, [0.34, 0.25, 0.32, 0.385]);
+      photoFace(this.faceScary, `characters/scream_${girl.id}.png`, [0.3, 0.22, 0.4, 0.48]);
+    }
     this.faceMat = applyPS2(new THREE.MeshLambertMaterial({ map: (o.scary ?? 0) > 0.5 ? this.faceScary : this.faceNormal }));
     const face = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.24), this.faceMat);
     face.position.set(0, -0.01, 0.1);
@@ -115,6 +123,20 @@ export class GirlModel {
     const dz = target.z - this.root.position.z;
     this.root.rotation.y = Math.atan2(dx, dz);
   }
+}
+
+/** Reemplaza la cara procedural por un recorte [x, y, ancho, alto] (0..1) de una foto opcional. */
+function photoFace(tex: THREE.Texture, path: string, [x, y, w, h]: [number, number, number, number]): void {
+  optionalImage(path, (photo) => {
+    const c = tex.image as HTMLCanvasElement;
+    c.width = 80;
+    c.height = 96;
+    const W = photo.naturalWidth;
+    const H = photo.naturalHeight;
+    c.getContext('2d')!.drawImage(photo, x * W, y * H, w * W, h * H, 0, 0, c.width, c.height);
+    tex.dispose();
+    tex.needsUpdate = true;
+  });
 }
 
 /** Cuerpo del jugador (solo visible en espejos y en la foto de espaldas). */

@@ -12,6 +12,7 @@ import { t } from '../i18n';
 import { TIMING } from '../config';
 import type { AudioEngine } from '../audio/AudioEngine';
 import type { CollisionWorld } from '../world/Collision';
+import { optionalImage } from '../textures/asset';
 
 export type Screen = 'home' | 'sms' | 'gallery' | 'call' | 'camera' | 'scare';
 
@@ -55,6 +56,11 @@ export class Phone implements System {
   readonly phoneCam: THREE.PerspectiveCamera;
 
   out = false;
+  /** Para el tutorial: ¿ya lo sacó alguna vez?, ¿cuántas veces levantó la cámara? */
+  everOut = false;
+  cameraUses = 0;
+  /** Cámara fijada con [Q] (alternativa a mantener el clic derecho, incómodo en trackpad). */
+  private camLatch = false;
   /** El jugador no puede guardarlo (llamada, susto). */
   forced = false;
   available = false;
@@ -81,13 +87,16 @@ export class Phone implements System {
   private callT = 0;
   onAnswer: (() => void) | null = null;
 
-  scareImage: HTMLCanvasElement | null = null;
+  scareImage: CanvasImageSource | null = null;
 
   // Callbacks para el guion
   onPhoto: ((p: Photo) => void) | null = null;
   onGalleryView: ((p: Photo) => void) | null = null;
   onScreenChange: ((s: Screen) => void) | null = null;
   onToggle: ((out: boolean) => void) | null = null;
+  /** El jugador acaba de ver en pantalla un mensaje que no había leído. */
+  onSmsRead: ((key: string) => void) | null = null;
+  private readCount = 0;
 
   private clockMinutes: number = TIMING.clockStart;
   private wallpaper: HTMLCanvasElement;
@@ -164,6 +173,20 @@ export class Phone implements System {
     this.phoneCam.layers.enable(LAYER.SPECTRAL);
 
     this.wallpaper = this.makeWallpaper();
+    // Selfie de las hermanas (Higgsfield) en lugar de las caras procedurales.
+    optionalImage('characters/wallpaper_sisters.png', (photo) => {
+      const ctx = this.wallpaper.getContext('2d')!;
+      const side = photo.naturalHeight;
+      const cropW = side * (SW / SH);
+      ctx.drawImage(photo, (photo.naturalWidth - cropW) * 0.42, 0, cropW, side, 0, 0, SW, SH);
+      const g = ctx.createLinearGradient(0, 0, 0, SH);
+      g.addColorStop(0, 'rgba(40,6,20,0.45)');
+      g.addColorStop(0.45, 'rgba(40,6,20,0.12)');
+      g.addColorStop(1, 'rgba(0,0,0,0.72)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, SW, SH);
+      this.dirty();
+    });
     this.draw();
   }
 
@@ -224,11 +247,20 @@ export class Phone implements System {
     if (!next && this.forced) return;
     if (next === this.out) return;
     this.out = next;
-    if (!next) this.cameraMode = false;
+    if (next) this.everOut = true;
+    if (!next) {
+      this.cameraMode = false;
+      this.camLatch = false;
+    }
     this.audio.play('phoneOpen');
     if (next && this.unreadSms > 0) this.setScreen('sms');
     this.onToggle?.(next);
     this.dirty();
+  }
+
+  /** Fija o suelta la cámara (lo usa el guion cuando el personaje fotografía por su cuenta). */
+  setCamera(on: boolean): void {
+    this.camLatch = on;
   }
 
   setFlash(on: boolean): void {
@@ -238,9 +270,16 @@ export class Phone implements System {
 
   setScreen(s: Screen): void {
     this.screen = s;
-    if (s === 'sms') this.unreadSms = 0;
+    if (s === 'sms') {
+      this.unreadSms = 0;
+      if (this.sms.length > this.readCount) {
+        this.readCount = this.sms.length;
+        this.onSmsRead?.(this.sms[this.sms.length - 1].key);
+      }
+    }
     if (s === 'gallery') {
-      if (this.newPhotos > 0) this.galleryIndex = Math.max(0, this.photos.length - this.newPhotos);
+      // Abrir siempre en la foto más reciente.
+      if (this.newPhotos > 0) this.galleryIndex = Math.max(0, this.photos.length - 1);
       this.newPhotos = 0;
       const p = this.photos[this.galleryIndex];
       if (p) this.onGalleryView?.(p);
@@ -273,6 +312,7 @@ export class Phone implements System {
     this.forced = true;
     this.toggle(true);
     this.cameraMode = false;
+    this.camLatch = false;
     this.setScreen('call');
     this.ring = this.audio.play('ringtone');
     this.audio.play('vibrate');
@@ -296,9 +336,12 @@ export class Phone implements System {
     this.setScreen('home');
   }
 
-  showScare(img: HTMLCanvasElement | null): void {
+  showScare(img: CanvasImageSource | null): void {
     this.scareImage = img;
-    if (img) this.setScreen('scare');
+    if (img) {
+      this.camLatch = false;
+      this.setScreen('scare');
+    }
     this.dirty();
   }
 
@@ -388,12 +431,14 @@ export class Phone implements System {
     if (inp.wasPressed('Digit1')) this.toggle();
     if (this.out) {
       if (inp.wasPressed('KeyF')) this.setFlash(!this.flashOn);
-      const wantCam = inp.isDown('Mouse2') && this.callState === 'none' && this.screen !== 'scare';
+      if (inp.wasPressed('KeyQ')) this.camLatch = !this.camLatch;
+      const wantCam = (inp.isDown('Mouse2') || this.camLatch) && this.callState === 'none' && this.screen !== 'scare';
       if (wantCam !== this.cameraMode) {
         this.cameraMode = wantCam;
+        if (wantCam) this.cameraUses++;
         this.setScreen(wantCam ? 'camera' : 'home');
       }
-      if (inp.wasPressed("Mouse0")) {
+      if (inp.wasPressed("Mouse0") || (this.cameraMode && inp.wasPressed('Space'))) {
         if (this.cameraMode) {
           if (this.camT > 0.8) this.pendingPhoto = true;
         } else if (!this.clickBlocked && this.callState === "none" && this.screen !== "scare") {
@@ -403,8 +448,9 @@ export class Phone implements System {
           this.audio.play('click');
         }
       }
-      if (this.screen === 'gallery' && inp.wheel !== 0 && this.photos.length) {
-        this.galleryIndex = THREE.MathUtils.clamp(this.galleryIndex + (inp.wheel > 0 ? 1 : -1), 0, this.photos.length - 1);
+      const turn = inp.wheel !== 0 ? Math.sign(inp.wheel) : (inp.wasPressed('ArrowRight') ? 1 : 0) - (inp.wasPressed('ArrowLeft') ? 1 : 0);
+      if (this.screen === 'gallery' && turn !== 0 && this.photos.length) {
+        this.galleryIndex = THREE.MathUtils.clamp(this.galleryIndex + turn, 0, this.photos.length - 1);
         this.audio.play('click');
         this.onGalleryView?.(this.photos[this.galleryIndex]);
         this.dirty();

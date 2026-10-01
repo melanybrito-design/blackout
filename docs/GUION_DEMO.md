@@ -1,4 +1,4 @@
-# GUION DE LA DEMO — ÚLTIMA VEZ VISTAS / LAST SEEN (≈15 min)
+# GUION DE LA DEMO — BLACKOUT (≈15 min)
 
 > Fuente de verdad para contenido, ritmo y textos. Todos los textos van a `src/i18n/es.json` y `en.json`.
 > Tiempos aproximados para un jugador promedio. Los screamers (S1–S5) los dispara el Director de Miedo dentro de su ventana.
@@ -116,7 +116,7 @@ Espacios compactos. Pasillos de 3 m de ancho, techos de 3 m y fluorescentes cada
 ## POST-FINAL — Meta-horror (15:00+)
 1. Pantalla falsa de "La página no responde / Page unresponsive" (dibujada en el canvas) con botones falsos "Esperar / Salir".
 2. Al hacer clic en cualquiera, la pantalla se corrompe y aparece: ES "sigo en el colegio." / EN "i'm still at school."
-3. Cartel: **"FIN DE LA DEMO — ÚLTIMA VEZ VISTAS"** + créditos breves.
+3. Cartel: **"FIN DE LA DEMO — BLACKOUT"** + créditos breves.
 4. Se vuelve al menú: el afiche ahora tiene **una séptima foto, "TÚ / S07"** (guardado en `localStorage`), y el título de la pestaña dice por unos segundos ES "gracias por venir" / EN "thanks for coming".
 
 ---

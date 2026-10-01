@@ -1,4 +1,4 @@
-# PROMPTS PARA HIGGSFIELD — ÚLTIMA VEZ VISTAS
+# PROMPTS PARA HIGGSFIELD — BLACKOUT
 
 > Los prompts están en **inglés** (los modelos rinden mejor así); las notas, en español.
 > Guarda cada archivo con **el nombre exacto** en la carpeta indicada. Yo los integro al juego.

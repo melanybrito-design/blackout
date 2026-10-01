@@ -20,6 +20,8 @@ import { Mimic } from '../entities/Mimic';
 import { Keypad } from '../ui/Keypad';
 import { Script } from './Script';
 import { Dust } from '../world/atmosphere';
+import { Hands } from '../player/Hands';
+import { DocumentView } from '../ui/Document';
 
 export class Session implements System {
   readonly scene = new THREE.Scene();
@@ -38,6 +40,8 @@ export class Session implements System {
   readonly mirror: MirrorRig;
   readonly mimic: Mimic;
   readonly keypad: Keypad;
+  readonly hands: Hands;
+  readonly doc: DocumentView;
   readonly script: Script;
   area: Area | 'none' = 'none';
   /** Secuencia con guion en curso (sin eventos aleatorios, controles limitados). */
@@ -71,6 +75,11 @@ export class Session implements System {
     this.mirror = game.add(new MirrorRig(this.scene, this.player));
     this.mimic = game.add(new Mimic(this.scene, this.player, audio));
     this.keypad = new Keypad('631', audio);
+    this.doc = new DocumentView(audio);
+    this.hands = game.add(new Hands(this.camera, this.player));
+    this.hands.rightBusy = () => this.phone.out;
+    this.hands.leftBusy = () => this.recorder.out;
+    this.interaction.onUse = () => this.hands.reach();
     this.script = new Script(this);
     game.add(this);
 
@@ -92,15 +101,18 @@ export class Session implements System {
 
   /** ¿El jugador tiene el control normal? */
   get inMenuLike(): boolean {
-    return this.journal.isOpen || this.keypad.isOpen;
+    return this.journal.isOpen || this.keypad.isOpen || this.doc.isOpen;
   }
 
   update(dt: number): void {
     const p = this.player;
     this.area = this.school.areaAt(p.position.x, p.position.z) ?? this.area;
 
-    // Diario (Tab)
-    if (this.game.input.rawPressed('Tab') && !this.keypad.isOpen && this.story.has('insideSchool') && !this.scripted) {
+    // Documento abierto: se cierra con E, clic o Espacio (en el frame siguiente al que lo abrió).
+    const raw = this.game.input;
+    if (this.doc.isOpen && (raw.rawPressed('KeyE') || raw.rawPressed('Mouse0') || raw.rawPressed('Space') || raw.rawPressed('Tab'))) {
+      this.doc.close();
+    } else if (this.game.input.rawPressed('Tab') && !this.keypad.isOpen && !this.doc.isOpen && !this.scripted) {
       this.journal.toggle();
     }
 
@@ -108,7 +120,8 @@ export class Session implements System {
     p.frozen = this.inMenuLike || this.scriptFreeze;
     p.lookEnabled = !this.inMenuLike && !this.scriptLookLock;
     this.interaction.blocked = this.inMenuLike || this.phone.callState === 'ringing' || this.scripted;
-    this.game.input.enabled = !this.keypad.isOpen;
+    this.game.input.enabled = !this.keypad.isOpen && !this.doc.isOpen;
+    this.hands.hidden = this.journal.isOpen || this.keypad.isOpen;
 
     // Enrutado del clic entre herramientas
     this.phone.clickBlocked = this.recorder.out && !this.phone.cameraMode;

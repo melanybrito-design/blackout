@@ -7,7 +7,7 @@ import { rng } from '../textures/rng';
 
 let gloveMat: THREE.MeshLambertMaterial | null = null;
 
-function gloveMaterial(): THREE.MeshLambertMaterial {
+export function gloveMaterial(): THREE.MeshLambertMaterial {
   if (gloveMat) return gloveMat;
   const [c, ctx] = canvas(32, 32);
   const r = rng(99);

@@ -7,7 +7,8 @@ import type { PlayerController } from '../player/PlayerController';
 import type { AudioEngine } from '../audio/AudioEngine';
 import { GirlModel } from './GirlModel';
 
-const PATH = [new THREE.Vector3(0, 0, -5), new THREE.Vector3(0, 0, -35.5), new THREE.Vector3(41.5, 0, -35.5)];
+// Sale de la escalera del tercer piso, dobla al pasillo largo y llega al gimnasio.
+const PATH = [new THREE.Vector3(0, 0, -30.2), new THREE.Vector3(0, 0, -35.5), new THREE.Vector3(41.5, 0, -35.5)];
 
 /** Distancia recorrida a lo largo del camino del punto más cercano a (x, z). */
 export function pathProgress(x: number, z: number): number {
@@ -55,6 +56,8 @@ export class Mimic implements System {
   private wasMoving = false;
   /** Ruido extra (forzar una puerta): avanza aunque el jugador esté quieto. */
   noise = 0;
+  /** Baja con cada vez que atrapa al jugador: la persecución no puede volverse una traba. */
+  ease = 1;
   onCatch: (() => void) | null = null;
   private tmp = new THREE.Vector3();
 
@@ -98,7 +101,7 @@ export class Mimic implements System {
     const p = this.player;
     const fast = p.speed > CHASE.moveThreshold && !p.crouched;
     let v = 0;
-    if (fast) v = p.speed * (p.running ? CHASE.runFactor : CHASE.walkFactor);
+    if (fast) v = p.speed * (p.running ? CHASE.runFactor : CHASE.walkFactor) * this.ease;
     if (this.noise > 0) {
       this.noise -= dt;
       v = Math.max(v, 1.4);
