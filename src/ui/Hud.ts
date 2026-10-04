@@ -16,6 +16,7 @@ export class Hud implements System {
   private holdEl = document.createElement('div');
   private goalEl = document.createElement('div');
   private levelEl = document.createElement('div');
+  private countEl = document.createElement('div');
   private hintT = 0;
   private subT = 0;
   private thoughtT = 0;
@@ -32,6 +33,8 @@ export class Hud implements System {
     this.holdEl.className = 'hud-hold';
     this.goalEl.className = 'hud-goal';
     this.levelEl.className = 'hud-level';
+    this.countEl.className = 'hud-count';
+    document.body.append(this.countEl);
     document.body.append(this.hintEl, this.subEl, this.thoughtEl, this.toastEl, this.holdEl, this.goalEl, this.levelEl);
   }
 
@@ -88,6 +91,23 @@ export class Hud implements System {
     this.levelEl.classList.add('on');
   }
 
+  /** Contador del nivel («LLAVES 1/3»). `null` lo oculta. Late cuando sube. */
+  counter(key: string | null, have = 0, total = 0): void {
+    if (!key) {
+      this.countEl.classList.remove('on');
+      return;
+    }
+    const text = `${t(key)} <b>${have}/${total}</b>`;
+    if (this.countEl.innerHTML !== text) {
+      this.countEl.innerHTML = text;
+      this.countEl.classList.remove('bump');
+      void this.countEl.offsetWidth;
+      this.countEl.classList.add('bump');
+    }
+    this.countEl.classList.add('on');
+    this.countEl.classList.toggle('done', have >= total);
+  }
+
   /** Barra de "mantener E" (0..1). */
   hold(p: number): void {
     this.holdEl.style.display = p > 0 && p < 1 ? 'block' : 'none';
@@ -131,6 +151,6 @@ export class Hud implements System {
   }
 
   setVisible(v: boolean): void {
-    for (const el of [this.hintEl, this.subEl, this.thoughtEl, this.toastEl, this.goalEl]) el.style.visibility = v ? '' : 'hidden';
+    for (const el of [this.hintEl, this.subEl, this.thoughtEl, this.toastEl, this.goalEl, this.countEl]) el.style.visibility = v ? '' : 'hidden';
   }
 }

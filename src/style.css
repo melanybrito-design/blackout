@@ -1153,3 +1153,40 @@ body:has(.debug) .hud-goal {
     opacity: 0;
   }
 }
+
+/* ---------------- Contador del nivel (llaves / fusibles) ---------------- */
+.hud-count {
+  position: fixed;
+  right: 26px;
+  top: 64px;
+  padding: 6px 12px 5px;
+  font: 14px 'Special Elite', monospace;
+  letter-spacing: 0.2em;
+  color: #d9d2b8;
+  background: rgba(0, 0, 0, 0.55);
+  border-right: 3px solid #b3121b;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.8s;
+}
+.hud-count.on {
+  opacity: 1;
+}
+.hud-count b {
+  margin-left: 8px;
+  font-size: 18px;
+  color: #fff;
+}
+.hud-count.done {
+  border-right-color: #6fae6a;
+}
+.hud-count.bump {
+  animation: count-bump 0.9s ease-out;
+}
+@keyframes count-bump {
+  0% {
+    transform: scale(1.25);
+    color: #fff;
+    background: rgba(179, 18, 27, 0.6);
+  }
+}

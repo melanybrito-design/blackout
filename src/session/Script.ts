@@ -41,6 +41,9 @@ export class Script {
   private finalT = 0;
   private s1Queued = false;
   private climbing = false;
+  private glints: THREE.Object3D[] = [];
+  private collectibles = new Map<Flag, THREE.Object3D>();
+  private fuseLeds: () => void = () => undefined;
   private spectral: GirlModel;
   private spectralT = -1;
   private once = new Set<string>();
@@ -185,11 +188,17 @@ export class Script {
       d.stairs2.locked = false;
       d.stairs2.open();
     }
-    if (has('s3Done')) {
+    if (has('fusesPlaced')) {
       d.stairs3.locked = false;
       d.stairs3.open();
     }
     for (let f = 1; f <= 3; f++) this.once.add(`level${f}`);
+    for (const [flag, mesh] of this.collectibles) if (has(flag)) mesh.visible = false;
+    if (data.checkpoint === 'bathroom' && !has('fusesPlaced')) {
+      this.once.add('blackout2');
+      this.floor2Power(false);
+    }
+    this.later(0.5, () => this.showCounter(floorAt(s.player.position.z, s.player.position.x)));
     if (has('bathOpen')) d.bath.open();
     if (has('s3Done')) s.school.mirrorBlood.visible = true;
     if (has('gymOpen')) {
@@ -298,9 +307,18 @@ export class Script {
         },
       });
     const [w1, w2] = FLOOR_WALLS;
-    stair('up2', w1 + 2.05, 2, 'act.up', d.stairs2, () => (this.story.has('hasBathKey') ? null : 'stairs.locked'));
+    stair('up2', w1 + 2.05, 2, 'act.up', d.stairs2, () => {
+      if (this.keys() >= 3) return null;
+      this.showCounter(1);
+      this.goal('goal.keys');
+      return this.keys() === 0 ? 'stairs.locked' : 'stairs.someKeys';
+    });
     stair('down1', w1 - 0.3, 1, 'act.down', null, () => null);
-    stair('up3', w2 + 2.05, 3, 'act.up', d.stairs3, () => (this.story.has('s3Done') ? null : 'stairs.chained'));
+    stair('up3', w2 + 2.05, 3, 'act.up', d.stairs3, () => {
+      if (this.story.has('fusesPlaced')) return null;
+      this.showCounter(2);
+      return 'stairs.chained';
+    });
     stair('down2', w2 - 0.3, 2, 'act.down', null, () => null);
 
     I.add({
@@ -412,10 +430,11 @@ export class Script {
       this.flag('hasBathKey');
       s.hud.think('ex.key');
       s.director.force('s2');
-      this.goal('goal.bath');
+      this.collected();
     });
 
     this.setupExaminables();
+    this.setupCollectibles();
 
     // Objetivos fotografiables
     s.phone.targets.push(
@@ -693,7 +712,15 @@ export class Script {
       s.hud.level(floor);
       s.audio.play('stingerSoft');
     }
-    if (floor === 2 && !this.story.has('s3Done')) this.goal('goal.floor2');
+    if (floor !== 1 || this.keys() > 0) this.showCounter(floor);
+    if (floor === 2 && !this.story.has('fusesPlaced')) {
+      this.goal('goal.fuses');
+      // BLACKOUT: el segundo piso está sin luz hasta que vuelvan los fusibles.
+      this.first('blackout2', () => {
+        this.floor2Power(false);
+        this.later(1.2, () => s.hud.think('th.floor2Dark'));
+      });
+    }
     if (floor === 3 && !this.story.has('chaseStarted')) this.goal('goal.gym');
     if (floor === 2) this.save('bathroom');
   }
@@ -720,6 +747,164 @@ export class Script {
     });
   }
 
+  // ================= Nivel 1: llaves · Nivel 2: fusibles =================
+
+  private keys(): number {
+    const has = (f: Flag) => this.story.has(f);
+    return (has('hasBathKey') ? 1 : 0) + (has('key2') ? 1 : 0) + (has('key3') ? 1 : 0);
+  }
+
+  private fuses(): number {
+    const has = (f: Flag) => this.story.has(f);
+    return (has('fuse1') ? 1 : 0) + (has('fuse2') ? 1 : 0) + (has('fuse3') ? 1 : 0);
+  }
+
+  /** Contador del piso: llaves en el 1, fusibles en el 2, nada en el 3. */
+  private showCounter(floor: number): void {
+    const s = this.s;
+    if (floor === 1 && !this.once.has('level2')) s.hud.counter('count.keys', this.keys(), 3);
+    else if (floor === 2 && !this.story.has('fusesPlaced')) s.hud.counter('count.fuses', this.fuses(), 3);
+    else s.hud.counter(null);
+  }
+
+  /** Se recogió una llave o un fusible: contador y, si están todos, el aviso de que la salida se abre. */
+  private collected(): void {
+    const s = this.s;
+    const floor = floorAt(s.player.position.z, s.player.position.x);
+    this.showCounter(floor);
+    if (floor === 1) {
+      if (this.keys() >= 3) {
+        this.later(2.5, () => s.hud.think('th.allKeys'));
+        this.goal('goal.bath');
+        this.later(5, () => s.hud.counter(null));
+      } else this.goal('goal.keys');
+    }
+    if (floor === 2 && this.fuses() >= 3) {
+      this.later(2.5, () => s.hud.think('th.allFuses'));
+      this.goal('goal.fusebox');
+    }
+  }
+
+  /** Luces del segundo piso (pasillo y laboratorio) según haya o no corriente. */
+  private floor2Power(on: boolean): void {
+    const L = this.s.school.lights;
+    const corridor = L.corridor.filter((l) => floorAt(l.group.position.z) === 2);
+    for (const l of corridor) l.mode = on ? 'steady' : 'off';
+    L.lab.forEach((l, i) => (l.mode = on ? (i === 0 ? 'unstable' : 'steady') : i === 0 ? 'dying' : 'off'));
+  }
+
+  /** Objetos a buscar: brillan apenas para que se encuentren en la oscuridad. */
+  private setupCollectibles(): void {
+    const s = this.s;
+    const I = s.interaction;
+    const keyMat = new THREE.MeshBasicMaterial({ color: 0xd8b85a });
+    const fuseMat = new THREE.MeshBasicMaterial({ color: 0xc94c3c });
+    const capMat = new THREE.MeshBasicMaterial({ color: 0xd9dcd6 });
+    const keyMesh = () => {
+      const g = new THREE.Group();
+      g.add(new THREE.Mesh(new THREE.TorusGeometry(0.022, 0.007, 6, 10), keyMat));
+      const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.011, 0.006), keyMat);
+      shaft.position.x = 0.055;
+      g.add(shaft);
+      const bit = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.022, 0.006), keyMat);
+      bit.position.set(0.08, -0.012, 0);
+      g.add(bit);
+      return g;
+    };
+    const fuseMesh = () => {
+      const g = new THREE.Group();
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.07, 8), fuseMat);
+      body.rotation.z = Math.PI / 2;
+      g.add(body);
+      for (const x of [-0.04, 0.04]) {
+        const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.014, 8), capMat);
+        cap.rotation.z = Math.PI / 2;
+        cap.position.x = x;
+        g.add(cap);
+      }
+      return g;
+    };
+    const place = (flag: Flag, mesh: THREE.Object3D, pos: THREE.Vector3, think: string, enabled: () => boolean = () => true) => {
+      mesh.position.copy(pos);
+      // Más grandes que en la vida real: tienen que leerse a baja resolución y con la linterna.
+      mesh.scale.setScalar(flag.startsWith('key') ? 2.4 : 1.9);
+      mesh.rotation.y = Math.random() * Math.PI;
+      mesh.visible = !this.story.has(flag);
+      s.scene.add(mesh);
+      this.glints.push(mesh);
+      I.add({
+        id: `get_${flag}`,
+        position: pos,
+        radius: 0.38,
+        priority: true,
+        enabled: () => mesh.visible && enabled(),
+        label: 'act.take',
+        use: () => {
+          mesh.visible = false;
+          this.flag(flag);
+          s.audio.play('pickup');
+          s.hud.think(think);
+          this.collected();
+          if (flag === 'fuse2' && !this.story.has('s3Done')) s.mirror.delay = Math.max(s.mirror.delay, 0.8);
+        },
+      });
+      this.collectibles.set(flag, mesh);
+    };
+    const v = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
+    // Nivel 1 (la 1ª llave es la del casillero 17)
+    place('key2', keyMesh(), v(-7.85, 0.48, -17.0), 'ex.key2'); // en el sillón de la sala de profesores
+    place('key3', keyMesh(), v(3.15, 0.03, -10.45), 'ex.key3'); // bajo la silla volcada de la 2°B
+    // Nivel 2
+    place('fuse1', fuseMesh(), v(7.7, 0.93, -24.6), 'ex.fuse1'); // mesón del laboratorio
+    place('fuse2', fuseMesh(), v(-4.55, 0.04, -20.05), 'ex.fuse2', () => s.school.stalls[2].open); // cubículo cerrado del baño
+    place('fuse3', fuseMesh(), v(1.15, 0.48, -27), 'ex.fuse3'); // basurero del pasillo
+
+    // Tablero eléctrico junto a la reja del tercer piso
+    const box = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.62, 0.42), new THREE.MeshLambertMaterial({ color: 0x5a6266 }));
+    box.position.set(-1.35, 1.45, -26.4);
+    s.scene.add(box);
+    const slots: THREE.MeshBasicMaterial[] = [];
+    for (let i = 0; i < 3; i++) {
+      const m = new THREE.MeshBasicMaterial({ color: 0x2a0606 });
+      const led = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.05, 0.05), m);
+      led.position.set(-1.29, 1.6 - i * 0.12, -26.4);
+      s.scene.add(led);
+      slots.push(m);
+    }
+    const lit = () => slots.forEach((m, i) => m.color.setHex(this.story.has('fusesPlaced') ? 0x5cff7a : i < this.fuses() ? 0xffb03a : 0x2a0606));
+    lit();
+    I.add({
+      id: 'fusebox',
+      position: v(-1.35, 1.45, -26.4),
+      radius: 0.4,
+      enabled: () => !this.story.has('fusesPlaced'),
+      label: 'act.fusebox',
+      use: () => {
+        this.showCounter(2);
+        if (this.fuses() < 3) {
+          s.audio.play('click');
+          s.hud.think(this.fuses() === 0 ? 'ex.fuseboxEmpty' : 'ex.fuseboxSome', undefined, { n: 3 - this.fuses() });
+          lit();
+          return;
+        }
+        // Vuelve la luz: el pasillo se enciende tubo por tubo y la reja eléctrica se suelta.
+        this.flag('fusesPlaced');
+        lit();
+        s.audio.play('unlock', { pos: box.position });
+        this.later(0.6, () => this.floor2Power(true));
+        this.later(1.2, () => {
+          s.audio.play('lockerBang', { pos: new THREE.Vector3(0, 1.5, FLOOR_WALLS[1] + 2) });
+          s.school.doors.stairs3.locked = false;
+          s.hud.think('th.powerBack');
+          s.hud.counter(null);
+          this.goal('goal.up3');
+          this.save('bathroom');
+        });
+      },
+    });
+    this.fuseLeds = lit;
+  }
+
   /** Recordatorio de una tecla: se muestra una sola vez, cuando esa herramienta empieza a importar. */
   private key(hint: string, seconds = 8): void {
     if (this.keysShown.has(hint) || this.s.scripted) return;
@@ -741,8 +926,8 @@ export class Script {
     if (!has('hasEVP')) return s.recorder.state === 'recorded' ? ['evp2', 'stuck.rewind'] : ['evp', 'stuck.evp'];
     if (!has('lockerOpened')) return ['locker', 'stuck.locker'];
     if (!has('hasBathKey')) return ['lockerItems', 'stuck.lockerItems'];
-    if (!has('bathOpen')) return floorAt(s.player.position.z, s.player.position.x) === 1 ? ['stairs', 'stuck.stairs'] : ['bath', 'stuck.bath'];
-    if (!has('hasMirrorCode')) return ['mirror', 'stuck.mirror'];
+    if (this.keys() < 3) return ['keys', 'stuck.keys'];
+    if (!has('fusesPlaced')) return floorAt(s.player.position.z, s.player.position.x) === 1 ? ['stairs', 'stuck.stairs'] : ['fuses', 'stuck.fuses'];
     if (!has('s3Done')) return ['s3', null];
     if (!has('chaseStarted')) return ['toGym', floorAt(s.player.position.z, s.player.position.x) === 2 ? 'stuck.up3' : null];
     if (!has('gymOpen')) return ['chase', s.area === 'long' && s.player.position.x > 38 ? 'stuck.code' : null];
@@ -752,6 +937,7 @@ export class Script {
   /** Una vez por segundo: recordar teclas nuevas (una vez) y soltar un pensamiento si lleva mucho atascado. */
   private guide(): void {
     const s = this.s;
+    this.fuseLeds();
     const ph = s.phone;
     if (s.scripted || s.inMenuLike || ph.callState !== 'none' || this.stage !== 'free') return;
     // Teclas: solo cuando la herramienta entra en juego.
@@ -929,7 +1115,8 @@ export class Script {
       }
       if (this.stage === 'free') this.go('s3_ramp');
     }
-    if (a !== 'bathroom' && this.story.has('s3Done') && !this.story.has('chaseStarted') && floorAt(s.player.position.z, s.player.position.x) === 2) this.goal('goal.up3');
+    if (a !== 'bathroom' && this.story.has('s3Done') && !this.story.has('chaseStarted') && floorAt(s.player.position.z, s.player.position.x) === 2)
+      this.goal(this.story.has('fusesPlaced') ? 'goal.up3' : 'goal.fuses');
     if (a !== 'bathroom' && this.pendingS4) {
       this.pendingS4 = false;
       this.s4();
@@ -1085,14 +1272,16 @@ export class Script {
       s.school.mirrorBlood.visible = true;
       this.flag('s3Done');
       this.person('renata', 'people.renata', false);
+      // Si no vio la escritura con la cámara, el espejo roto se la muestra igual: nadie queda sin el código.
+      if (!s.journal.graph.has('c7')) {
+        this.addClue('c7');
+        this.flag('hasMirrorCode');
+        this.later(4.5, () => s.hud.think('th.codeInBlood'));
+      }
       s.director.majorFinished();
-      this.goal('goal.up3');
+      if (!this.story.has('fusesPlaced')) this.goal('goal.fuses');
+      else this.goal('goal.up3');
       this.go('free');
-      // Arriba se suelta la cadena de la reja del tercer piso.
-      this.later(3.5, () => {
-        s.audio.play('lockerBang', { pos: new THREE.Vector3(0, 1.5, FLOOR_WALLS[1] + 2) });
-        s.hud.think('stairs.unchained');
-      });
     });
   }
 
@@ -1231,8 +1420,15 @@ export class Script {
     } else if (this.spectralT >= 5) this.spectral.root.visible = false;
 
     // Nivel 3: el apagón y la llamada llegan cuando ya avanzaste por el pasillo largo (ella sale de la escalera).
-    if (this.story.has('s3Done') && !this.story.has('s4Done') && !this.story.has('chaseStarted') && this.stage === 'free' && s.area === 'long' && p.position.x > 6 && !s.director.isArmed('s4') && !s.director.fired.includes('s4'))
+    if (!this.story.has('s4Done') && !this.story.has('chaseStarted') && this.stage === 'free' && s.area === 'long' && p.position.x > 6 && !s.director.isArmed('s4') && !s.director.fired.includes('s4'))
       s.director.arm('s4', true);
+
+    // Llaves y fusibles giran y destellan apenas.
+    for (const g of this.glints) {
+      if (!g.visible) continue;
+      g.rotation.y += dt * 1.4;
+      g.position.y += Math.sin(this.t * 2.2 + g.position.x) * dt * 0.01;
+    }
 
     // Cubículos del baño abriéndose
     for (const stall of s.school.stalls)

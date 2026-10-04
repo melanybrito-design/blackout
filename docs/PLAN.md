@@ -70,6 +70,17 @@ Reemplaza el mapa de un solo piso de AGENTS.md / GUION_DEMO.md:
 - Durante un susto o un corte a negro se oculta toda la interfaz; el negro queda encima del polvo y la lluvia.
 - Bebedero del pasillo rehecho y cubiertas del laboratorio en un tono que no se quema con la linterna.
 
+### Revisión del 04/10/2026, segunda pasada (búsqueda estilo Backrooms)
+Cada nivel tiene una salida cerrada y hay que recorrer el piso buscando lo que la abre, con un contador arriba a la derecha.
+| Nivel | Salida | Qué buscar | Dónde |
+|---|---|---|---|
+| 1 | Reja de la escalera con 3 candados | 3 llaves (`hasBathKey`, `key2`, `key3`) | casillero 17 · sillón de la sala de profesores · bajo la silla volcada de la 2°B |
+| 2 | Reja eléctrica al piso 3 (el piso está **sin luz** al llegar) | 3 fusibles (`fuse1-3`) + ponerlos en el tablero junto a la reja (`fusesPlaced`) | mesón del laboratorio · cubículo cerrado del baño · basurero del pasillo |
+| 3 | Candado del gimnasio | el código 6-3-1 | se ve en el espejo (cámara) o aparece entre la sangre al romperse en S3 |
+- Recoger el fusible del baño acelera el reflejo, así S3 no se pierde. S4 ya no depende de S3: se dispara al avanzar por el pasillo largo del piso 3.
+- Llaves y fusibles giran, brillan un poco, son más grandes que lo real y tienen prioridad sobre otros objetos cercanos en el puntero.
+- Verificado: partida nueva → final juntando 3/3 llaves y 3/3 fusibles, 5/5 sustos, código autocompletado.
+
 ---
 
 ## Fase 0 — Setup (≈30 min)

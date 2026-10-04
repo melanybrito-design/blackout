@@ -16,6 +16,8 @@ export interface Interactable {
   use: () => void;
   /** Clave i18n del verbo que se muestra junto al puntero ("Abrir", "Examinar"…). */
   label?: string | (() => string);
+  /** Gana frente a otros objetos cercanos (llaves, fusibles: lo que hay que encontrar). */
+  priority?: boolean;
   /** Si está definido, hay que mantener E estos segundos. */
   hold?: number;
   onHold?: (progress: number) => void;
@@ -83,7 +85,7 @@ export class Interaction implements System {
         const off = this.tmp.distanceTo(it.position);
         if (off > it.radius) continue;
         // Entre varios candidatos gana el que está más centrado en el puntero (y luego el más cercano).
-        const score = dist + (off / it.radius) * 0.8;
+        const score = dist + (off / it.radius) * 0.8 - (it.priority ? 1.5 : 0);
         if (score < bestD) {
           bestD = score;
           best = it;

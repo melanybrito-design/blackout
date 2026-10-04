@@ -30,7 +30,15 @@ export type Flag =
   | 'chaseDone'
   | 'gymOpen'
   | 's5Done'
-  | 'finished';
+  | 'finished'
+  // Nivel 1: llaves de los candados de la escalera (la 1ª es la del casillero 17 = hasBathKey)
+  | 'key2'
+  | 'key3'
+  // Nivel 2: fusibles del tablero eléctrico
+  | 'fuse1'
+  | 'fuse2'
+  | 'fuse3'
+  | 'fusesPlaced';
 
 export type Checkpoint = 'start' | 'corridor' | 'classroom' | 'bathroom' | 'chase' | 'gym';
 

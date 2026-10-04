@@ -30,8 +30,8 @@ function debugSave(cp: Checkpoint): NonNullable<ReturnType<typeof StoryState.loa
   const steps: Array<[Checkpoint, Flag[], string[], string[]]> = [
     ['corridor', ['gateClosed', 'sms1', 'insideSchool'], ['c1'], []],
     ['classroom', ['sms2', 'hasCredential', 'hasBoardPhoto', 'deduceRehearsal', 's1Done'], ['c2', 'c3'], ['c1+c3']],
-    ['bathroom', ['hasRecorder', 'heardTape', 'hasEVP', 'deduceLocker', 'lockerOpened', 's2Done', 'hasLuciaPhoto', 'hasBathKey', 'bathOpen'], ['c4', 'c5', 'c6'], ['c4+c5']],
-    ['chase', ['hasMirrorCode', 's3Done', 'deduceCode'], ['c7'], ['c6+c7']],
+    ['bathroom', ['hasRecorder', 'heardTape', 'hasEVP', 'deduceLocker', 'lockerOpened', 's2Done', 'hasLuciaPhoto', 'hasBathKey', 'key2', 'key3', 'bathOpen'], ['c4', 'c5', 'c6'], ['c4+c5']],
+    ['chase', ['hasMirrorCode', 's3Done', 'deduceCode', 'fuse1', 'fuse2', 'fuse3', 'fusesPlaced'], ['c7'], ['c6+c7']],
     ['gym', ['s4Done', 'chaseStarted', 'midDoorForced', 'gymOpen'], [], []],
   ];
   const flags: Flag[] = [];
