@@ -65,6 +65,11 @@ Reemplaza el mapa de un solo piso de AGENTS.md / GUION_DEMO.md:
 - La interacción ignora lo que queda a la espalda del jugador.
 - Verificado: partida nueva → final pasando los tres niveles, 5/5 sustos, rejas cerradas antes de tiempo, subir y bajar.
 
+### Revisión del 04/10/2026 (screamers)
+- **El rostro ya no es una imagen pegada.** `horror/ScreamerOverlay.ts` es un shader a pantalla completa: corte a negro y el rostro sale de la oscuridad hacia la cámara (embestida en ~0,14 s), recortado en óvalo difuso, con franjas rasgadas, saltos de cuadro, separación de color, grano y parpadeo. Los videos y las imágenes de Higgsfield pasan por el mismo efecto. El destello de entrada respeta «Reducir destellos».
+- Durante un susto o un corte a negro se oculta toda la interfaz; el negro queda encima del polvo y la lluvia.
+- Bebedero del pasillo rehecho y cubiertas del laboratorio en un tono que no se quema con la linterna.
+
 ---
 
 ## Fase 0 — Setup (≈30 min)

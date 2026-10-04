@@ -466,8 +466,12 @@ export function buildSchool(game: Game): School {
   bin.position.set(1.15, 0.275, -27);
   scene.add(bin);
   collision.add(0.95, 1.4, -27.25, -26.75, 0, 0.6);
-  B.box(-1.5, -1.15, 0.8, 1.0, -16.4, -15.6, M.porcelain);
-  B.box(-1.45, -1.3, 0, 0.8, -16.1, -15.9, M.porcelain, { collide: false });
+  // Bebedero de acero: placa en la pared, cuenco, pie y la canilla
+  B.box(-1.4, -1.36, 0.7, 1.35, -16.45, -15.55, M.metal, { collide: false });
+  B.box(-1.4, -1.1, 0.82, 0.96, -16.35, -15.65, M.metal);
+  B.box(-1.12, -1.08, 0.86, 1.0, -16.35, -15.65, M.metal, { collide: false });
+  B.box(-1.38, -1.24, 0, 0.82, -16.12, -15.88, M.dark, { collide: false });
+  B.box(-1.3, -1.24, 0.96, 1.02, -16.03, -15.97, M.porcelain, { collide: false });
 
   // ================= SALA 2°B =================
   B.floor(1.5, 9.5, -15, -5, M.wood);
@@ -678,7 +682,7 @@ export function buildSchool(game: Game): School {
   const labDoor = sideDoor(1.5, -21.4, 0xb9c2c4);
   for (const z of [-19.4, -22, -24.6]) {
     B.box(3.4, 8.0, 0, 0.86, z - 0.4, z + 0.4, M.dark); // mesones
-    B.box(3.35, 8.05, 0.86, 0.9, z - 0.45, z + 0.45, M.porcelain, { collide: false });
+    B.box(3.35, 8.05, 0.86, 0.9, z - 0.45, z + 0.45, M.stall, { collide: false });
   }
   B.box(9.0, 9.4, 0, 2.0, -26.2, -17.8, M.frame); // estantería de frascos
   B.box(8.95, 9.4, 0.98, 1.02, -26.2, -17.8, M.metal, { collide: false });

@@ -972,7 +972,7 @@ export class Script {
     const s = this.s;
     s.audio.unduck(0.05);
     s.audio.play(big ? 'stingerBig' : 'stinger');
-    s.screamer.show(seed, dur, big ? 0 : 0.25);
+    s.screamer.show(seed, dur, big ? 0 : 0.25, { big, flash: !s.fx.reduceFlashes });
     s.fx.pulse(1, big ? 0.9 : 0.5);
     s.player.shake(0.14, 0.8);
     s.director.addTension(20);

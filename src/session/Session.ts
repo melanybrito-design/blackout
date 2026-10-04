@@ -122,6 +122,10 @@ export class Session implements System {
     this.interaction.blocked = this.inMenuLike || this.phone.callState === 'ringing' || this.scripted;
     this.game.input.enabled = !this.keypad.isOpen && !this.doc.isOpen;
     this.hands.hidden = this.journal.isOpen || this.keypad.isOpen;
+    // Durante un susto o un corte a negro no queda nada de interfaz encima.
+    const clean = !this.screamer.active;
+    this.hud.setVisible(clean);
+    this.interaction.setVisible(clean);
 
     // Enrutado del clic entre herramientas
     this.phone.clickBlocked = this.recorder.out && !this.phone.cameraMode;
